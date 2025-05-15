@@ -2,3 +2,5 @@
 .turbo
 .next
 node_modules
+.env
+.dev.vars
