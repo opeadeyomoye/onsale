@@ -6,7 +6,10 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "hono": "^4.7.9"
+    "@clerk/backend": "^1.33.1",
+    "@hono/clerk-auth": "^2.0.0",
+    "hono": "^4.7.9",
+    "zod": "^3.25.30"
   },
   "devDependencies": {
     "wrangler": "^4.4.0"
