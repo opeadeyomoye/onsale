@@ -4,6 +4,9 @@ import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors'
 import z from 'zod'
 import requireClerkAuth from './middleware/requireClerkAuth'
+import { drizzle } from 'drizzle-orm/d1'
+import * as dbSchema from './schema'
+import * as storesHandler from './handlers/stores'
 
 const app = new Hono<AppEnv>()
   .use(cors({
@@ -16,9 +19,15 @@ const app = new Hono<AppEnv>()
     allowMethods: ['get', 'post']
   }))
   .use(clerkMiddleware(), requireClerkAuth)
-  .get('/onboarding', (c) => {
-    return c.text('Hello onboarder!')
+  .use(async (c, next) => {
+    c.set('db', drizzle(c.env.DB, { schema: dbSchema }))
+    await next()
   })
+  .post(
+    '/stores',
+    zValidator('json', z.object({ name: z.string().min(4).max(256) })),
+    async (c) => storesHandler.createStore(c, c.req.valid('json').name)
+  )
 
 export default app
 export type AppType = typeof app

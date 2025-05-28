@@ -7,13 +7,19 @@ type WorkerBindings = {
   // AI: Ai
 }
 
+type Prettify<T> = {
+  [K in keyof T]: T[K]
+} & {}
+
 type AppDatabaseSchema = typeof import('./src/schema')
+interface AppDrizzle extends Prettify<import('drizzle-orm/d1').DrizzleD1Database<AppDatabaseSchema>> {
+  $client: D1Database
+}
+
 interface AppEnv {
   Bindings: WorkerBindings
   Variables: {
-    // db: import('drizzle-orm/d1').DrizzleD1Database<AppDatabaseSchema> & {
-    //   $client: D1Database
-    // }
+    db: AppDrizzle
   }
 }
 
