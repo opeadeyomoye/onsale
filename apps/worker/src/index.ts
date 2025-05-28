@@ -15,7 +15,7 @@ const app = new Hono<AppEnv>()
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['get', 'post']
   }))
-  // .use(clerkMiddleware(), requireClerkAuth)
+  .use(clerkMiddleware(), requireClerkAuth)
   .get('/onboarding', (c) => {
     return c.text('Hello onboarder!')
   })
