@@ -1,17 +1,26 @@
 {
-  "name": "worker",
+  "name": "@onsale/worker",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts"
+    }
+  },
   "dependencies": {
     "@clerk/backend": "^1.33.1",
     "@hono/clerk-auth": "^2.0.0",
-    "hono": "^4.7.9",
+    "@hono/zod-validator": "^0.6.0",
+    "@types/node": "22",
+    "hono": "4.7.9",
     "zod": "^3.25.30"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250525.0",
     "wrangler": "^4.4.0"
   }
 }

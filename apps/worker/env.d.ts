@@ -2,6 +2,7 @@
 type WorkerBindings = {
   CLERK_PUBLISHABLE_KEY: string
   CLERK_SECRET_KEY: string
+  CORS_ORIGINS: string
   // DB: D1Database
   // AI: Ai
 }
