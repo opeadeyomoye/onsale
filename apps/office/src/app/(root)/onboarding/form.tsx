@@ -1,14 +1,48 @@
 'use client'
 
-import { AppType } from '@onsale/worker'
-import { hc } from 'hono/client'
-
-const client = hc<AppType>('http://localhost:8787')
+import { Alert, AlertDescription, AlertTitle } from '@/components/shad/ui/alert'
+import { Button } from '@/components/shad/ui/button'
+import useRpc from '@/hooks/useRpc'
+import { CheckIcon } from '@heroicons/react/16/solid'
+import { AlertCircleIcon, Loader2 } from 'lucide-react'
+import { div as MotionDiv } from 'motion/react-client'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function OnboardingForm() {
-  client.onboarding.$get().then(async (res) => console.log('client response', await res.text()));
-  return (
-    <form className="mt-2 max-w-xs mx-auto space-y-8">
+  const [submitting, setSubmitting] = useState(false)
+  const [storeName, setStoreName] = useState('')
+  const [problem, setProblem] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const client = useRpc()
+  const router = useRouter()
+
+  if (success) return <AllGood />
+
+  const createStore: React.FormEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault()
+
+    setProblem(false)
+    setSubmitting(true)
+    const res = await client.stores.$post({ json: { name: storeName } })
+    setSubmitting(false)
+
+    if (!res.ok) {
+      if (res.status === 400) {
+        return router.push('/') // they already have a store
+      }
+      return setProblem(true)
+    }
+    setSuccess(true)
+  }
+
+  return <>
+    <h1 className="font-bold text-xl text-center text-slate-900 lg:text-2xl">
+      Welcome
+    </h1>
+
+    <form onSubmit={createStore} className="mt-2 max-w-xs mx-auto space-y-8">
       <p className="text-center text-gray-700">
         To get started, tell us the name of your store
       </p>
@@ -21,21 +55,67 @@ export default function OnboardingForm() {
           <input
             id="storeName"
             name="storeName"
+            value={storeName}
+            onChange={e => setStoreName(e.target.value)}
             type="text"
-            placeholder="e.g. Brielle's Hub"
-            className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600 sm:text-sm/6"
+            placeholder="Brielle's Hub"
+            className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-slate-600 sm:text-sm/6"
+            required
           />
         </div>
       </div>
 
       <div>
-        <button
+        <Button
           type="submit"
-          className="w-full rounded-md bg-blue-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          disabled={submitting}
+          className="w-full rounded-md bg-slate-700 hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600"
         >
-          Continue
-        </button>
+          {submitting ? <Loader2 className="animate-spin" /> : 'Continue'}
+        </Button>
+
+        {problem ? (
+          <Alert variant="destructive" className="mt-6">
+            <AlertCircleIcon />
+            <AlertTitle>Something went wrong that time</AlertTitle>
+            <AlertDescription>
+              <p>Please try again in a minute.</p>
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </div>
     </form>
+  </>
+}
+
+function AllGood() {
+  const router = useRouter()
+
+  return (
+    <div className="mt-8 max-w-xs mx-auto">
+      <MotionDiv
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          duration: 0.4,
+          scale: { type: 'spring', visualDuration: 0.4, bounce: 0.5 },
+        }}
+        className="w-12 h-12 mx-auto flex items-center justify-center rounded-full bg-emerald-600"
+      >
+        <CheckIcon className="h-6 w-6 text-white" />
+      </MotionDiv>
+
+      <h3 className="mt-4 text-xl font-bold text-center">
+        Your store is ready!
+      </h3>
+
+      <div className="mt-6">
+        <Button variant="default" className="w-full" onClick={() => router.push('/')}>
+          Start adding products
+        </Button>
+
+        <Link className="mt-2 block text-sm text-center text-slate-800" href="/">I'll do that later</Link>
+      </div>
+    </div>
   )
 }

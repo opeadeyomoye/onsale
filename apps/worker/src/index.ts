@@ -20,7 +20,10 @@ const app = new Hono<AppEnv>()
   }))
   .use(clerkMiddleware(), requireClerkAuth)
   .use(async (c, next) => {
-    c.set('db', drizzle(c.env.DB, { schema: dbSchema }))
+    c.set('db', drizzle(c.env.DB, {
+      schema: dbSchema,
+      casing: 'snake_case'
+    }))
     await next()
   })
   .post(

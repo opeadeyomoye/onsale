@@ -13,10 +13,6 @@ export default function OnboardingPage() {
       <div className="hidden min-h-screen bg-slate-900 lg:block"></div>
 
       <div className="mt-[25vh] px-4 lg:max-w-3xl">
-        <h1 className="font-bold text-xl text-center text-slate-900 lg:text-2xl">
-          Welcome
-        </h1>
-
         <OnboardingForm />
       </div>
     </div>
