@@ -37,8 +37,8 @@ import {
   MagnifyingGlassIcon,
   MegaphoneIcon,
   QuestionMarkCircleIcon,
+  ShoppingBagIcon,
   SparklesIcon,
-  Square2StackIcon,
   TicketIcon,
 } from '@heroicons/react/20/solid'
 
@@ -93,10 +93,10 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
             <Dropdown>
               <DropdownButton as={SidebarItem} className="lg:mb-2.5">
                 <Avatar src="/tailwind-logo.svg" />
-                <SidebarLabel>Tailwind Labs</SidebarLabel>
-                <ChevronDownIcon />
+                <SidebarLabel>onsale</SidebarLabel>
+                {/* <ChevronDownIcon /> */}
               </DropdownButton>
-              <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
+              {/* <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
                 <DropdownItem href="/teams/1/settings">
                   <Cog8ToothIcon />
                   <DropdownLabel>Settings</DropdownLabel>
@@ -115,7 +115,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                   <PlusIcon />
                   <DropdownLabel>New team&hellip;</DropdownLabel>
                 </DropdownItem>
-              </DropdownMenu>
+              </DropdownMenu> */}
             </Dropdown>
             <SidebarSection className="max-lg:hidden">
               <SidebarItem href="/search">
@@ -135,31 +135,27 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
               <SidebarItem href="/events">
-                <Square2StackIcon />
-                <SidebarLabel>Events</SidebarLabel>
+                <ShoppingBagIcon />
+                <SidebarLabel>Products</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="/orders">
+              {/* <SidebarItem href="/orders">
                 <TicketIcon />
                 <SidebarLabel>Orders</SidebarLabel>
               </SidebarItem>
               <SidebarItem href="/settings">
                 <Cog6ToothIcon />
                 <SidebarLabel>Settings</SidebarLabel>
-              </SidebarItem>
-              <SidebarItem href="/broadcasts">
-                <MegaphoneIcon />
-                <SidebarLabel>Broadcasts</SidebarLabel>
-              </SidebarItem>
+              </SidebarItem> */}
             </SidebarSection>
-            <SidebarSection className="max-lg:hidden">
+            {/* <SidebarSection className="max-lg:hidden">
               <SidebarHeading>Upcoming Events</SidebarHeading>
               <SidebarItem href="/events/1">Bear Hug: Live in Concert</SidebarItem>
               <SidebarItem href="/events/2">Viking People</SidebarItem>
               <SidebarItem href="/events/3">Six Fingers — DJ Set</SidebarItem>
               <SidebarItem href="/events/4">We All Look The Same</SidebarItem>
-            </SidebarSection>
+            </SidebarSection> */}
             <SidebarSpacer />
-            <SidebarSection>
+            {/* <SidebarSection>
               <SidebarItem href="/support">
                 <QuestionMarkCircleIcon />
                 <SidebarLabel>Support</SidebarLabel>
@@ -168,9 +164,9 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                 <SparklesIcon />
                 <SidebarLabel>Changelog</SidebarLabel>
               </SidebarItem>
-            </SidebarSection>
+            </SidebarSection> */}
           </SidebarBody>
-          <SidebarFooter className="max-lg:hidden">
+          {/* <SidebarFooter className="max-lg:hidden">
             <Dropdown>
               <DropdownButton as={SidebarItem}>
                 <span className="flex min-w-0 items-center gap-3">
@@ -209,7 +205,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
-          </SidebarFooter>
+          </SidebarFooter> */}
         </Sidebar>
       }
     >
