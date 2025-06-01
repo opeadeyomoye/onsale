@@ -134,7 +134,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="/events">
+              <SidebarItem href="/products">
                 <ShoppingBagIcon />
                 <SidebarLabel>Products</SidebarLabel>
               </SidebarItem>
