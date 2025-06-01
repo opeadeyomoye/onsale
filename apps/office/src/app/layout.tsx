@@ -8,6 +8,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
+import AuthenticatedLayout from './authenticated'
 import './globals.css'
 
 const geistSans = Geist({
@@ -32,9 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang='en'>
-        <body className={`${geistSans.variable} ${geistMono.variable}`}>
-          {children}
+      <html lang="en" className="bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
+        <body className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+          <AuthenticatedLayout>{children}</AuthenticatedLayout>
         </body>
       </html>
     </ClerkProvider>
