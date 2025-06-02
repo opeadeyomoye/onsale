@@ -1,8 +1,7 @@
-import { Button } from '@/components/catalyst/button'
 import { Heading } from '@/components/catalyst/heading'
 import { Link } from '@/components/catalyst/link'
-import { Text, TextLink } from '@/components/catalyst/text'
 import { ChevronLeftIcon } from '@heroicons/react/16/solid'
+import AddProductFormsContainer from './forms'
 
 export default function AddProductPage() {
   return <>
@@ -20,6 +19,6 @@ export default function AddProductPage() {
       </div>
     </div>
 
-    <div></div>
+    <AddProductFormsContainer />
   </>
 }
