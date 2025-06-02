@@ -8,6 +8,13 @@
       "when": 1748687101404,
       "tag": "0000_adorable_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1748867011126,
+      "tag": "0001_gigantic_thor",
+      "breakpoints": true
     }
   ]
 }

@@ -31,6 +31,7 @@ const app = new Hono<AppEnv>()
     zValidator('json', z.object({ name: z.string().min(4).max(256) })),
     async (c) => storesHandler.createStore(c, c.req.valid('json').name)
   )
+  // .post('/products')
 
 export default app
 export type AppType = typeof app

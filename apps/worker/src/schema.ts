@@ -8,24 +8,75 @@ const defaultTimestamps = {
 }
 
 export const stores = sqliteTable('stores', {
-  id: integer().primaryKey({ autoIncrement: true }),
-  creatorId: text({ length: 256 }).notNull().unique(), // 'unique' here === users can own just the 1 store
+  id: integer()
+    .primaryKey({ autoIncrement: true }),
+  creatorId: text({ length: 256 })
+    .notNull()
+    .unique(), // 'unique' here === users can own just the 1 store
   name: text({ length: 256 }).notNull(),
-  slug: text({ length: 256 }).notNull().unique(),
+  slug: text({ length: 256 })
+    .notNull()
+    .unique(),
   ...defaultTimestamps
 })
 
+const idPlusStoreIdWithForeignKey = {
+  id: integer()
+    .primaryKey({ autoIncrement: false }),
+  storeId: integer()
+    .notNull()
+    .references(() => stores.id),
+}
+
 export const categories = sqliteTable('product_categories', {
-  id: integer().primaryKey({ autoIncrement: true }),
-  storeId: integer().notNull().references(() => stores.id),
+  ...idPlusStoreIdWithForeignKey,
   parentCategoryId: integer().references((): AnySQLiteColumn => categories.id),
   name: text({ length: 256 }).notNull(),
-  slug: text({ length: 256 }).notNull(),
+  slug: text({ length: 288 }).notNull(),
   description: text({ length: 1024 }),
   ...defaultTimestamps
 }, table => [
   uniqueIndex('storeId_slug_pair_unique_idx').on(table.storeId, table.slug),
 ])
+
+const pricingModel = text({ enum: ['unit', 'bulk'] }).notNull()
+
+export const products = sqliteTable('products', {
+  ...idPlusStoreIdWithForeignKey,
+
+  name: text({ length: 256 }).notNull(),
+  slug: text({ length: 288 }).notNull(),
+  description: text({ length: 1024 }),
+  colors: text({ mode: 'json' })
+    .$type<ProductColor>(),
+  images: text({ mode: 'json' })
+    .$type<ProductImages>(),
+  pricingModel,
+  inStock: integer({ mode: 'boolean' })
+    .notNull()
+    .default(false),
+  published: integer({ mode: 'boolean' })
+    .notNull()
+    .default(false),
+  ...defaultTimestamps,
+})
+const productColors = ['red', 'gray', 'none'] as const
+type ProductColor = (typeof productColors)[number]
+type ProductImages = Record<ProductColor, { url: string }[]>
+
+export const prices = sqliteTable('product_prices', {
+  ...idPlusStoreIdWithForeignKey,
+  productId: integer()
+    .notNull()
+    .references(() => products.id),
+  model: pricingModel,
+  currency: text({ enum: ['usd', 'ngn'], length: 3 })
+    .notNull(),
+  amount: integer({ mode: 'number' }),
+  quantity: integer({ mode: 'number' }),
+  amount_decimal: text(),
+  ...defaultTimestamps,
+})
 
 /*
 ---------------
