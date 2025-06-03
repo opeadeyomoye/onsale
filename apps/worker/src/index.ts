@@ -3,10 +3,12 @@ import { zValidator } from '@hono/zod-validator'
 import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors'
 import z from 'zod'
-import requireClerkAuth from './middleware/requireClerkAuth'
 import { drizzle } from 'drizzle-orm/d1'
-import * as dbSchema from './schema'
+import * as productsHandler from './handlers/products'
 import * as storesHandler from './handlers/stores'
+import requireClerkAuth from './middleware/requireClerkAuth'
+import * as dbSchema from './schema'
+import * as InputSchemas from './validation/validation'
 
 const app = new Hono<AppEnv>()
   .use(cors({
@@ -26,12 +28,32 @@ const app = new Hono<AppEnv>()
     }))
     await next()
   })
+  .use(async (c, next) => {
+    const store = await c.get('db').query.stores.findFirst({
+      where: (store, { eq }) => eq(store.creatorId, c.get('clerkAuth')?.userId || '')
+    })
+    if (!store) {
+      return c.json({ message: 'Unknown store' }, 400)
+    }
+    c.set('store', store)
+    await next()
+  })
+  .get('/session', c => {
+    const { name, slug, id } = c.get('store')
+    return c.json({
+      store: { name, slug, id }
+    })
+  })
   .post(
     '/stores',
     zValidator('json', z.object({ name: z.string().min(4).max(256) })),
-    async (c) => storesHandler.createStore(c, c.req.valid('json').name)
+    c => storesHandler.createStore(c, c.req.valid('json').name)
   )
-  // .post('/products')
+  .post(
+    '/products',
+    zValidator('json', InputSchemas.AddProductSchema),
+    c => productsHandler.addProduct(c, c.req.valid('json')),
+  )
 
 export default app
 export type AppType = typeof app

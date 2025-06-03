@@ -20,6 +20,9 @@ interface AppEnv {
   Bindings: WorkerBindings
   Variables: {
     db: AppDrizzle
+    store: import('drizzle-orm').InferModelFromColumns<
+      AppDatabaseSchema['stores']['_']['columns']
+    >
   }
 }
 
