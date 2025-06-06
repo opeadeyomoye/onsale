@@ -43,12 +43,12 @@ const pricingModel = text({ enum: ['unit', 'bulk'] }).notNull()
 
 export const products = sqliteTable('products', {
   ...idPlusStoreIdWithForeignKey,
-
+  categoryId: integer().references(() => categories.id),
   name: text({ length: 256 }).notNull(),
   slug: text({ length: 288 }).notNull(),
   description: text({ length: 1024 }),
   colors: text({ mode: 'json' })
-    .$type<ProductColor>(),
+    .$type<ProductColor[]>(),
   images: text({ mode: 'json' })
     .$type<ProductImages>(),
   pricingModel,
@@ -59,7 +59,9 @@ export const products = sqliteTable('products', {
     .notNull()
     .default(false),
   ...defaultTimestamps,
-})
+}, table => [
+  uniqueIndex('products_storeId_slug_pair_unique_idx').on(table.storeId, table.slug),
+])
 const productColors = ['red', 'gray', 'none'] as const
 type ProductColor = (typeof productColors)[number]
 type ProductImages = Record<ProductColor, { url: string }[]>

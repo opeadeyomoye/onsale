@@ -15,6 +15,13 @@
       "when": 1748867011126,
       "tag": "0001_gigantic_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1749172480673,
+      "tag": "0002_slimy_fixer",
+      "breakpoints": true
     }
   ]
 }
