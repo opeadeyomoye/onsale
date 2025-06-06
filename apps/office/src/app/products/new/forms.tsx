@@ -1,61 +1,88 @@
 'use client'
+import { Avatar } from '@/components/catalyst/avatar'
 import { Button } from '@/components/catalyst/button'
 import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/catalyst/checkbox'
+import { Combobox, ComboboxLabel, ComboboxOption } from '@/components/catalyst/combobox'
 import { Divider } from '@/components/catalyst/divider'
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/catalyst/fieldset'
+import { Heading } from '@/components/catalyst/heading'
 import { Input } from '@/components/catalyst/input'
 import { Text } from '@/components/catalyst/text'
 import { Textarea } from '@/components/catalyst/textarea'
+import { Alert, AlertDescription, AlertTitle } from '@/components/shad/ui/alert'
 import useRpc from '@/hooks/useRpc'
+import colors from '@/lib/colors'
 import { ChevronRightIcon } from '@heroicons/react/16/solid'
+import { EntityType } from '@onsale/worker'
 import { useMutation } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { atom, useAtomValue, useSetAtom } from 'jotai'
+import { AlertCircleIcon, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form'
+
+const productAtom = atom<EntityType<'products'>>()
+
 
 export default function AddProductFormsContainer() {
   const [settingImages, setSettingImages] = useState(false)
   if (settingImages) {
     return <SetImagesForm />
   }
+  return <>
+    <div className="mt-4 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 lg:mt-8 dark:border-white/10">
+      <Heading>Add a new product</Heading>
+      <div className="flex gap-4">
+        {/* <Button outline>Refund</Button> */}
+      </div>
+    </div>
 
-  return <BasicInfoForm next={() => setSettingImages(true)} />
+    <BasicInfoForm next={() => setSettingImages(true)} />
+  </>
 }
 
 type BasicInfoInput = {
   name: string
   description: string
   costPerUnit: string
-  inStock?: boolean
-  published?: boolean
+  inStock: boolean
+  published: boolean
 }
 
 function BasicInfoForm({ next }: { next: Function }) {
-  const { control, handleSubmit, register } = useForm<BasicInfoInput>()
+  const { control, handleSubmit, register } = useForm<BasicInfoInput>({
+    defaultValues: {
+      inStock: true,
+      published: false,
+    }
+  })
   const client = useRpc()
+  const setProduct = useSetAtom(productAtom)
+
   const addProductMutation = useMutation({
     mutationFn: async (data: BasicInfoInput) => {
-      console.log({ prid: data })
-      const { ok } = await client.products.$post({
+      const post = await client.products.$post({
         json: {
           name: data.name,
           description: data.description,
-          inStock: typeof data.inStock === 'undefined' ? true : data.inStock,
-          published: typeof data.published === 'undefined' ? false : data.published,
+          inStock: data.inStock,
+          published: data.published,
           pricingModel: 'unit',
           prices: [{
             amount: data.costPerUnit,
             currency: 'ngn',
             model: 'unit',
-            quantity: 1,
           }]
         }
       })
-      if (!ok) {
+      if (!post.ok) {
         throw new Error('Failed to add product')
       }
+      return await post.json()
     },
-    onSuccess: () => next(),
+    onSuccess: (data) => {
+      setProduct(data.data)
+      next()
+    },
   })
   const onSubmit: SubmitHandler<BasicInfoInput> = data => addProductMutation.mutate(data)
   const { isPending, isError } = addProductMutation
@@ -65,7 +92,7 @@ function BasicInfoForm({ next }: { next: Function }) {
       {/* ... */}
       <Fieldset>
         <Legend className="">The Basics</Legend>
-        <Text className="hidden">Without this your odds of getting your order are low.</Text>
+        <Text className="hidden">.</Text>
         <FieldGroup>
           <Field>
             <Label>Product Name</Label>
@@ -75,7 +102,7 @@ function BasicInfoForm({ next }: { next: Function }) {
           <Field>
             <Label>Description</Label>
             <Textarea {...register('description')} />
-            <Description>Feel free to wax lyrical.</Description>
+            <Description>Feel free to wax lyrical about the product here.</Description>
           </Field>
           <Field>
             <Label>Cost per unit</Label>
@@ -132,6 +159,16 @@ function BasicInfoForm({ next }: { next: Function }) {
         </CheckboxGroup>
       </Fieldset>
 
+      {isError ? (
+        <Alert variant="destructive" className="my-6">
+          <AlertCircleIcon />
+          <AlertTitle>Something went wrong</AlertTitle>
+          <AlertDescription>
+            Please try again in a minute.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="w-full border-t border-zinc-950/10 dark:border-white/10">
         <div className="w-full pt-6 flex justify-end">
           <Button className="min-w-24" type="submit" disabled={isPending}>
@@ -145,5 +182,52 @@ function BasicInfoForm({ next }: { next: Function }) {
 }
 
 function SetImagesForm() {
-  return 'Setting Images!'
+  const product = useAtomValue(productAtom)
+  return (
+    <Fieldset className="mt-8 max-w-">
+      <Legend>Upload images for {product?.name}</Legend>
+      <Text>
+        Add images for each color that {product?.name} comes in.
+        If {product?.name} does not vary by color, upload its images under "No color".
+      </Text>
+
+      <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="p-6 rounded-lg shadow-md bg-zinc-950">
+          <Field>
+            <Label>Find a color</Label>
+            <Combobox
+              name="color"
+              options={Object.values(colors)}
+              displayValue={color => color?.name}
+              defaultValue={colors.noColor}
+            >
+              {(color) => (
+                <ComboboxOption value={color}>
+                  <Avatar style={{ backgroundColor: color.hex }} className="" alt="" />
+                  <ComboboxLabel>{color.name}</ComboboxLabel>
+                </ComboboxOption>
+              )}
+            </Combobox>
+            <div className="mt-6">
+              <Button color="light">
+                Upload images
+              </Button>
+            </div>
+          </Field>
+        </div>
+      </div>
+      {/* <FieldGroup>
+        <Field>
+          <Label>Product image</Label>
+          <Description>Upload a main image for the product.</Description>
+          <Input type="file" accept="image/*" />
+        </Field>
+        <Field>
+          <Label>Additional images</Label>
+          <Description>Upload any additional images for the product.</Description>
+          <Input type="file" accept="image/*" multiple />
+        </Field>
+      </FieldGroup> */}
+    </Fieldset>
+  )
 }
