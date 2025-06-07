@@ -65,6 +65,11 @@ const app = new Hono<AppEnv>()
     zValidator('form', InputSchemas.AddProductImageSchema.form),
     c => productsHandler.addProductImage(c, c.req.valid('form'), c.req.valid('param'))
   )
+  .get(
+    '/product-media/:key',
+    zValidator('param', z.object({ key: z.string() })),
+    c => productsHandler.preeProductImage(c, c.req.valid('param').key)
+  )
 
 export default app
 

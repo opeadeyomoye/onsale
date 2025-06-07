@@ -132,6 +132,18 @@ export async function addProductImage(
   }, 201)
 }
 
+export async function preeProductImage( c: Context<AppEnv>, key: string) {
+  const object = await c.env.PRODUCT_MEDIA.get(key)
+  if (!object) {
+    return c.json({ message: 'Image not found' }, 404)
+  }
+  const headers = new Headers()
+  object.writeHttpMetadata(headers)
+  headers.set('etag', object.httpEtag)
+
+  return c.newResponse(object.body, 200, Object.fromEntries(headers))
+}
+
 function getImageKey(
   { storeSlug, productSlug, colorId, ext }:
   { storeSlug: string, productSlug: string, colorId: string, ext?: string }
