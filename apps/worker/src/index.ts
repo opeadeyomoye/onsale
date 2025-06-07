@@ -49,6 +49,11 @@ const app = new Hono<AppEnv>()
     zValidator('json', z.object({ name: z.string().min(4).max(256) })),
     c => storesHandler.createStore(c, c.req.valid('json').name)
   )
+  .get(
+    '/products/:id',
+    zValidator('param', z.object({ id: z.coerce.number() })),
+    c => productsHandler.getProduct(c, c.req.valid('param').id)
+  )
   .post(
     '/products',
     zValidator('json', InputSchemas.AddProductSchema),
@@ -56,4 +61,8 @@ const app = new Hono<AppEnv>()
   )
 
 export default app
+
+type DbSchemaKey = keyof typeof dbSchema
+type DbSchemaTableKey<T = DbSchemaKey> = T extends `${infer N}Relations` ? never : T
 export type AppType = typeof app
+export type EntityType<T extends DbSchemaTableKey> = (typeof dbSchema)[T]['$inferSelect']

@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { type AnySQLiteColumn, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 const defaultTimestamps = {
@@ -62,6 +62,19 @@ export const products = sqliteTable('products', {
 }, table => [
   uniqueIndex('products_storeId_slug_pair_unique_idx').on(table.storeId, table.slug),
 ])
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+  prices: many(prices),
+  store: one(stores, {
+    fields: [products.storeId],
+    references: [stores.id],
+  }),
+}))
+
 const productColors = ['red', 'gray', 'none'] as const
 type ProductColor = (typeof productColors)[number]
 type ProductImages = Record<ProductColor, { url: string }[]>
@@ -79,6 +92,16 @@ export const prices = sqliteTable('product_prices', {
   amount_decimal: text(),
   ...defaultTimestamps,
 })
+export const pricesRelations = relations(prices, ({ one }) => ({
+  product: one(products, {
+    fields: [prices.productId],
+    references: [products.id],
+  }),
+  store: one(stores, {
+    fields: [prices.storeId],
+    references: [stores.id],
+  }),
+}))
 
 /*
 ---------------

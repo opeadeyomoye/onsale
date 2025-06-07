@@ -1,8 +1,29 @@
 import { Context } from 'hono'
 import { AddProductInput } from '../validation/validation'
 import { prices, products } from '../schema'
-import { randomString, slugify } from '../util/string'
+import { slugify } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
+
+export async function getProduct(c: Context<AppEnv>, productId: number) {
+  const db = c.get('db')
+  const store = c.get('store')
+
+  const product = await db.query.products.findFirst({
+    where: (product, { eq, and }) => and(
+      eq(product.id, productId),
+      eq(product.storeId, store.id)
+    ),
+    with: {
+      prices: true,
+    },
+  })
+
+  if (!product) {
+    return c.json({ message: 'Product not found' }, 404)
+  }
+
+  return c.json(product, 200)
+}
 
 export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
   const db = c.get('db')
@@ -18,7 +39,7 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
     ),
   })
   if (existing) {
-    slug = `${slug}-${randomString(8)}`
+    slug = `${slug}-${Number(Date.now()).toString(36)}`
   }
   const { data, error } = await tryCatch((async () => {
     const { prices: pricesInput, ...partialProduct } = input
@@ -47,4 +68,8 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
   }
 
   return c.json({ message: 'Product added successfully', data }, 201)
+}
+
+export async function addProductImage(c: Context<AppEnv>) {
+
 }
