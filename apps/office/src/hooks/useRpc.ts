@@ -1,6 +1,5 @@
 import { useAuth } from '@clerk/nextjs'
-import { hcWithType, type Client } from '@onsale/worker/hc'
-import { hc } from 'hono/client'
+import { hcWithType } from '@onsale/worker/hc'
 
 type BearerTokenType = string | (() => Promise<string | null>)
 
