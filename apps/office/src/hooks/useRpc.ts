@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/nextjs'
-import { AppType } from '@onsale/worker'
+import { hcWithType, type Client } from '@onsale/worker/hc'
 import { hc } from 'hono/client'
 
 type BearerTokenType = string | (() => Promise<string | null>)
@@ -14,7 +14,7 @@ export default function useRpc(token?: BearerTokenType) {
 }
 
 function getRpcClient(token: BearerTokenType) {
-  return hc<AppType>(process.env.NEXT_PUBLIC_API_ROOT || 'http://localhost:8787', {
+  return hcWithType(process.env.NEXT_PUBLIC_API_ROOT || 'http://localhost:8787', {
     async headers() {
       const bearerToken = typeof token === 'function'
         ? await token()

@@ -1,7 +1,9 @@
 {
   "name": "@onsale/worker",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "pnpm --filter @onsale/worker --parallel \"/^dev:.*/\"",
+    "dev:tsc": "tsc -p tsconfig.build.json --watch",
+    "dev:wrangler": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "generate": "drizzle-kit generate",
@@ -12,6 +14,12 @@
   "exports": {
     ".": {
       "types": "./src/index.ts"
+    },
+    "./hc": {
+      "import": {
+        "types": "./dist/src/hc.d.ts",
+        "default": "./dist/src/hc.js"
+      }
     }
   },
   "dependencies": {
