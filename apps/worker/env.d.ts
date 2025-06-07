@@ -4,6 +4,7 @@ type WorkerBindings = {
   CLERK_SECRET_KEY: string
   CORS_ORIGINS: string
   DB: D1Database
+  PRODUCT_MEDIA: R2Bucket
   // AI: Ai
 }
 

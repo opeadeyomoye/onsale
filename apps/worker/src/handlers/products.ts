@@ -1,8 +1,13 @@
 import { Context } from 'hono'
-import { AddProductInput } from '../validation/validation'
+import type {
+  AddProductImageInput,
+  AddProductImageParam,
+  AddProductInput
+} from '../validation/validation'
 import { prices, products } from '../schema'
-import { slugify } from '../util/string'
+import { randomString, slugify } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
+import { eq } from 'drizzle-orm'
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const db = c.get('db')
@@ -64,12 +69,76 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
     return product
   })())
   if (error) {
+
     return c.json({ message: 'Failed to add product' }, 500)
   }
 
   return c.json({ message: 'Product added successfully', data }, 201)
 }
 
-export async function addProductImage(c: Context<AppEnv>) {
+export async function addProductImage(
+  c: Context<AppEnv>,
+  { image }: AddProductImageInput,
+  { id: productId, colorId }: AddProductImageParam
+) {
+  const db = c.get('db')
+  const store = c.get('store')
 
+  const product = await db.query.products.findFirst({
+    where: (product, { eq, and }) => and(
+      eq(product.id, productId),
+      eq(product.storeId, store.id)
+    ),
+  })
+
+  if (!product) {
+    return c.json({ message: 'Product not found' }, 404)
+  }
+  const ext = image.type.split('/')[1]
+  const imageKey = getImageKey({
+    storeSlug: store.slug,
+    productSlug: product.slug,
+    colorId,
+    ext
+  })
+  const { data: newObject, error } = await tryCatch(
+    c.env.PRODUCT_MEDIA.put(imageKey, image)
+  )
+  if (error) {
+    return c.json({ message: 'Failed to upload image' }, 500)
+  }
+
+  product.images = product.images || {}
+  product.images[colorId] = product.images[colorId] || []
+  product.images[colorId].push({ url: imageKey })
+
+  const { data, error: dbError } = await tryCatch((async () => {
+    const [updated] = await db
+      .update(products)
+      .set({ images: product.images })
+      .where(eq(products.id, productId))
+      .returning()
+
+    return updated
+  })())
+
+  if (dbError) {
+    return c.json({ message: 'Failed to update product with new image' }, 500)
+  }
+
+  return c.json({
+    message: 'Image added successfully',
+    data
+  }, 201)
+}
+
+function getImageKey(
+  { storeSlug, productSlug, colorId, ext }:
+  { storeSlug: string, productSlug: string, colorId: string, ext?: string }
+) {
+  const colorPart = colorId === 'noColor' ? '' : `-in-${colorId}`
+  const randomPart = `-${Number(Date.now()).toString(36)}-${randomString(8)}`
+  const end = ext ? `.${ext}` : ''
+
+  return`${storeSlug}-${productSlug}${colorPart}${randomPart}${end}`
 }

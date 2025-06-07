@@ -59,6 +59,12 @@ const app = new Hono<AppEnv>()
     zValidator('json', InputSchemas.AddProductSchema),
     c => productsHandler.addProduct(c, c.req.valid('json')),
   )
+  .post(
+    '/products/:id/images/:colorId',
+    zValidator('param', InputSchemas.AddProductImageSchema.param),
+    zValidator('form', InputSchemas.AddProductImageSchema.form),
+    c => productsHandler.addProductImage(c, c.req.valid('form'), c.req.valid('param'))
+  )
 
 export default app
 

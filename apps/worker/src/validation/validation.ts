@@ -1,3 +1,4 @@
+import colors from '@onsale/common/colors'
 import z from 'zod/v4'
 
 export type AddProductInput = z.infer<typeof AddProductSchema>
@@ -27,3 +28,19 @@ export const AddProductSchema = z.object({
     { error: 'One or more of the prices uses a model that conflicts with the product\'s.' }
   )
 
+export const AddProductImageSchema = {
+  form: z.object({
+    image: z.file().min(1024).max(1024 * 1024 * 3 /* 3MB */).mime([
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ]),
+  }),
+  param: z.object({
+    id: z.coerce.number().min(1),
+    colorId: z.enum(Object.values(colors).map(color => color.id)),
+  }),
+}
+export type AddProductImageInput = z.infer<typeof AddProductImageSchema.form>
+export type AddProductImageParam = z.infer<typeof AddProductImageSchema.param>

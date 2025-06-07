@@ -1,3 +1,4 @@
+import { type ColorId } from '@onsale/common/colors'
 import { relations, sql } from 'drizzle-orm'
 import { type AnySQLiteColumn, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
@@ -48,7 +49,7 @@ export const products = sqliteTable('products', {
   slug: text({ length: 288 }).notNull(),
   description: text({ length: 1024 }),
   colors: text({ mode: 'json' })
-    .$type<ProductColor[]>(),
+    .$type<ColorId[]>(),
   images: text({ mode: 'json' })
     .$type<ProductImages>(),
   pricingModel,
@@ -75,9 +76,9 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   }),
 }))
 
-const productColors = ['red', 'gray', 'none'] as const
-type ProductColor = (typeof productColors)[number]
-type ProductImages = Record<ProductColor, { url: string }[]>
+type ProductImages = {
+  [color in ColorId]?: { url: string}[]
+}
 
 export const prices = sqliteTable('product_prices', {
   ...idPlusStoreIdWithForeignKey,
