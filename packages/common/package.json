@@ -1,0 +1,8 @@
+{
+  "name": "@onsale/common",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./colors": "./src/colors.ts"
+  }
+}
