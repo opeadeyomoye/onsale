@@ -31,6 +31,7 @@ import { productsActions } from '@/lib/actions'
 import { EntityType } from '@onsale/worker'
 import { getQueryClient } from '@/app/getQueryClient'
 import { getMediaUrl } from '@/lib/media'
+import { hexToRgba } from '@/lib/string'
 
 
 export default function AddProductFormsContainer() {
@@ -192,7 +193,15 @@ function BasicInfoForm({ next }: { next: Function }) {
 }
 
 function SetImagesForm() {
+  const client = useRpc()
   const localProduct = useAtomValue(productAtom)
+
+  const productQuery = useQuery({
+    queryKey: ['product', localProduct?.id],
+    queryFn: async () => productsActions(client).getProduct(localProduct?.id || 0),
+  })
+
+  const images = productQuery.data?.images
 
   return (
     <Fieldset className="mt-28">
@@ -203,66 +212,83 @@ function SetImagesForm() {
       </Text>
 
       <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ColorSelector />
+        {Object.keys(images || {}).map(colorId => {
+          const color = colors[colorId as ColorId]
+          return (
+            <ColorImageSelector
+              key={colorId}
+              product={{
+                id: localProduct?.id || 0,
+                name: localProduct?.name || '',
+                images: images || {}
+              }}
+              color={color}
+            />
+          )
+        })}
+        <ColorImageSelector
+          product={{
+            id: localProduct?.id || 0,
+            name: localProduct?.name || '',
+            images: images || {}
+          }}
+        />
       </div>
-      {/* <FieldGroup>
-        <Field>
-          <Label>Product image</Label>
-          <Description>Upload a main image for the product.</Description>
-          <Input type="file" accept="image/*" />
-        </Field>
-        <Field>
-          <Label>Additional images</Label>
-          <Description>Upload any additional images for the product.</Description>
-          <Input type="file" accept="image/*" multiple />
-        </Field>
-      </FieldGroup> */}
     </Fieldset>
   )
 }
 
-function ColorSelector({ onChange, value }: { onChange?: (color: string) => void; value?: string }) {
-  const client = useRpc()
-  const localProduct = useAtomValue(productAtom)
-  const [color, setColor] = useState<typeof colors[ColorId]>(colors.noColor)
-  const [dialogOpen, setDialogOpen] = useState(false)
+type ColorImageSelectorProps = {
+  product: {
+    id: number
+    name: string
+    images: EntityType<'products'>['images']
+  }
+  color?: typeof colors[ColorId]
+}
 
-  const productQuery = useQuery({
-    queryKey: ['product', localProduct?.id],
-    queryFn: async () => productsActions(client).getProduct(localProduct?.id || 0),
-  })
-  // todo: handle error state
+function ColorImageSelector({ product: { id, name, images }, color }: ColorImageSelectorProps) {
+  const [selectedColor, setSelectedColor] = useState(color || colors.noColor)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const selectedColorImages = images?.[selectedColor.id] || []
+
+  const setDialogOpenState = (newOpenState: boolean) => {
+    if (!color && dialogOpen && (newOpenState === false)) {
+      // If the dialog is being closed, reset the selected color to the default
+      setSelectedColor(colors.noColor)
+    }
+    setDialogOpen(newOpenState)
+  }
 
   return <>
     <UploadImagesDialog
-      selectedColor={color}
+      selectedColor={selectedColor}
       open={dialogOpen}
-      setOpen={setDialogOpen}
-      images={productQuery.data?.images?.[color.id] || []}
-      product={{
-        id: localProduct?.id || 0,
-        name: localProduct?.name || ''
-      }}
+      setOpen={setDialogOpenState}
+      images={selectedColorImages}
+      product={{ id, name }}
     />
     <div className="p-6 rounded-lg shadow-md bg-zinc-950">
       <Field>
-        <Label>Find a color</Label>
-        <Combobox
-          name="color"
-          options={Object.values(colors)}
-          displayValue={color => color?.name}
-          value={color}
-          onChange={c => c?.id ? setColor(c) : null}
-        >
-          {(color) => (
-            <ComboboxOption value={color}>
-              <Avatar style={{ backgroundColor: color.hex }} className="" alt="" />
-              <ComboboxLabel>{color.name}</ComboboxLabel>
-            </ComboboxOption>
-          )}
-        </Combobox>
+        <Label>{color ? color.name : 'Find a color'}</Label>
+        {color ? null : (
+          <Combobox
+            name="color"
+            options={Object.values(colors)}
+            displayValue={c => c?.name}
+            value={selectedColor}
+            onChange={c => c?.id ? setSelectedColor(c) : null}
+          >
+            {cx => (
+              <ComboboxOption value={cx}>
+                <Avatar style={{ backgroundColor: cx.hex }} className="" alt="" />
+                <ComboboxLabel>{cx.name}</ComboboxLabel>
+              </ComboboxOption>
+            )}
+          </Combobox>
+        )}
         <div className="mt-6">
-          <Button color="light" onClick={() => setDialogOpen(true)} disabled={!color}>
+          <Button color="light" onClick={() => setDialogOpen(true)} disabled={!selectedColor}>
             Upload images
           </Button>
         </div>
@@ -316,6 +342,7 @@ function UploadImagesDialog(
 
   return (
     <Dialog
+      size="2xl"
       open={open}
       onClose={setOpen}
       className={`${selectedColor.id === 'noColor' ? '' : 'border-t-2'}`}
@@ -325,10 +352,7 @@ function UploadImagesDialog(
         Pictures of {product.name}
         {selectedColor.id === 'noColor' ? '' : ` in ${selectedColor.name}`}
       </DialogTitle>
-      <DialogDescription>
-        You can select multiple images at once.
-      </DialogDescription>
-      <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
         {images.map(image => (
           <div className="shrink-0" key={image.url}>
             <img
@@ -342,10 +366,7 @@ function UploadImagesDialog(
           <label className="block text-center cursor-pointer">
             <PlusIcon aria-hidden="true" className="mx-auto size-8 text-gray-400" />
             <div className="mt-2 flex text-sm/6 text-gray-600">
-              <Label
-                htmlFor="id-new-images"
-                className=""
-              >
+              <Label htmlFor="id-new-images" className="">
                 <span>
                   Select images
                 </span>
@@ -366,6 +387,9 @@ function UploadImagesDialog(
           </label>
         </div>
       </div>
+      <DialogDescription className="mt-2">
+        You can select several images at once.
+      </DialogDescription>
     </Dialog>
   )
 }
