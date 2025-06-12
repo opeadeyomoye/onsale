@@ -247,7 +247,7 @@ function SetImagesForm() {
       <Divider className="my-8 md:my-12" />
 
       <div className="mt-6 flex justify-end gap-x-4">
-        <Button outline>Back</Button>
+        {/* <Button outline>Back</Button> */}
         <Button href={'/products'}>Finish</Button>
       </div>
     </Fieldset>
@@ -344,7 +344,7 @@ function UploadImagesDialog(
   const queryClient = getQueryClient()
   const client = useRpc()
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (files: FileList) => {
       if (!files.length) return
 
@@ -395,29 +395,33 @@ function UploadImagesDialog(
             />
           </div>
         ))}
-        <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-gray-900/35 px-4 py-2 dark:border-white/45 sm:py-0">
-          <label className="block text-center cursor-pointer">
-            <PlusIcon aria-hidden="true" className="mx-auto size-8 text-gray-400" />
-            <div className="mt-2 flex text-sm/6 text-gray-600">
-              <Label htmlFor="id-new-images" className="">
-                <span>
-                  Select images
-                </span>
-              </Label>
+        <div className="h-32 flex items-center justify-center rounded-lg border border-dashed border-gray-900/35 px-4 py-2 transition duration-200 hover:bg-secondary dark:border-white/45 sm:py-0">
+          {isPending ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+              <label className="block text-center">
+                <PlusIcon aria-hidden="true" className="mx-auto size-8 text-gray-400" />
+                <div className="mt-2 flex text-sm/6 text-gray-600">
+                  <Label htmlFor="id-new-images" className="">
+                    <span>
+                      Select images
+                    </span>
+                  </Label>
 
-              <input
-                id="id-new-images"
-                type="file"
-                className="sr-only"
-                accept="image/*"
-                multiple
-                onChange={e => handleFilesChange(e.target.files)}
-              />
-            </div>
-            <Text className="text-xs/5 text-gray-600">
-              <span>Max. 3MB each</span>
-            </Text>
-          </label>
+                  <input
+                    id="id-new-images"
+                    type="file"
+                    className="sr-only"
+                    accept="image/*"
+                    multiple
+                    onChange={e => handleFilesChange(e.target.files)}
+                  />
+                </div>
+                <Text className="text-xs/5 text-gray-600">
+                  <span>Max. 3MB each</span>
+                </Text>
+              </label>
+          )}
         </div>
       </div>
       <DialogDescription className="mt-6">
