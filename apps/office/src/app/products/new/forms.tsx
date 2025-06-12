@@ -37,6 +37,12 @@ import { hexToRgba } from '@/lib/string'
 export default function AddProductFormsContainer() {
   const product = useAtomValue(productAtom)
   const [settingImages, setSettingImages] = useState(false)
+  const goToImages = () => {
+    setSettingImages(true)
+    setTimeout(() => document.getElementById('id-upload-images')?.scrollIntoView({
+      behavior: 'smooth',
+    }), 200) // Wait for the state to update before scrolling
+  }
 
   return <>
     <div className="mt-4 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 lg:mt-8 dark:border-white/10">
@@ -46,8 +52,8 @@ export default function AddProductFormsContainer() {
       </div>
     </div>
 
-    <BasicInfoForm next={() => setSettingImages(true)} />
-    {product?.id ? <SetImagesForm /> : null}
+    {/* {product?.id ? <SetImagesForm /> : null} */}
+    {settingImages ? <SetImagesForm /> : <BasicInfoForm next={goToImages} />}
   </>
 }
 
@@ -183,7 +189,10 @@ function BasicInfoForm({ next }: { next: Function }) {
       <div className="w-full border-t border-zinc-950/10 dark:border-white/10">
         <div className="w-full pt-6 flex justify-end">
           <Button className="min-w-24" type="submit" disabled={isPending}>
-            {isPending ? <Loader2 aria-label="Saving product..." className="animate-spin" /> : 'Next: set images'}
+            {isPending
+              ? <Loader2 aria-label="Saving product..." className="animate-spin" />
+              : 'Next: set images'
+            }
             <ChevronRightIcon className={isPending ? 'hidden' : ''} />
           </Button>
         </div>
@@ -204,14 +213,14 @@ function SetImagesForm() {
   const images = productQuery.data?.images
 
   return (
-    <Fieldset className="mt-28">
+    <Fieldset className="mt-12" id="id-upload-images">
       <Legend>Upload images for {localProduct?.name}</Legend>
       <Text>
         Add images for each color that {localProduct?.name} comes in.
         If {localProduct?.name} does not vary by color, upload its images under "No color".
       </Text>
 
-      <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {Object.keys(images || {}).map(colorId => {
           const color = colors[colorId as ColorId]
           return (
@@ -233,6 +242,13 @@ function SetImagesForm() {
             images: images || {}
           }}
         />
+      </div>
+
+      <Divider className="my-8 md:my-12" />
+
+      <div className="mt-6 flex justify-end gap-x-4">
+        <Button outline>Back</Button>
+        <Button href={'/products'}>Finish</Button>
       </div>
     </Fieldset>
   )
@@ -304,8 +320,8 @@ function ColorImageSelector({ product: { id, name, images }, color }: ColorImage
             )}
           </Combobox>
         )}
-        <div className="mt-6">
-          <Button color="light" onClick={() => setDialogOpen(true)} disabled={!selectedColor}>
+        <div className={`${color ? 'mt-6' : 'mt-10'}`}>
+          <Button plain onClick={() => setDialogOpen(true)} disabled={!selectedColor}>
             {color ? 'Update images' : 'Add images'}
           </Button>
         </div>
