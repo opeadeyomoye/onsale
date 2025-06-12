@@ -271,7 +271,24 @@ function ColorImageSelector({ product: { id, name, images }, color }: ColorImage
     <div className="p-6 rounded-lg shadow-md bg-zinc-950">
       <Field>
         <Label>{color ? color.name : 'Find a color'}</Label>
-        {color ? null : (
+        {color ? (
+          <div className="mt-4 flex items-center rounded-2xl">
+            <div className="grid grid-cols-3 gap-3">
+              {selectedColorImages.slice(0, 3).map(image => (
+                <div key={image.url}>
+                  <img
+                    src={getMediaUrl(image.url)}
+                    alt=""
+                    className="h-12 w-auto rounded-lg shadow-sm object-cover opacity-70"
+                  />
+                </div>
+              ))}
+            </div>
+            <Text className="ml-4">
+              {selectedColorImages.length > 3 ? `+ ${selectedColorImages.length - 3} more` : ''}
+            </Text>
+          </div>
+        ) : (
           <Combobox
             name="color"
             options={Object.values(colors)}
@@ -289,7 +306,7 @@ function ColorImageSelector({ product: { id, name, images }, color }: ColorImage
         )}
         <div className="mt-6">
           <Button color="light" onClick={() => setDialogOpen(true)} disabled={!selectedColor}>
-            Upload images
+            {color ? 'Update images' : 'Add images'}
           </Button>
         </div>
       </Field>
@@ -387,7 +404,7 @@ function UploadImagesDialog(
           </label>
         </div>
       </div>
-      <DialogDescription className="mt-2">
+      <DialogDescription className="mt-6">
         You can select several images at once.
       </DialogDescription>
     </Dialog>
