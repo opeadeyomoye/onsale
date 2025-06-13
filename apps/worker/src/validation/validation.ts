@@ -1,8 +1,6 @@
 import colors from '@onsale/common/colors'
 import z from 'zod/v4'
 
-export type AddProductInput = z.infer<typeof AddProductSchema>
-
 export const AddProductSchema = z.object({
   categoryId: z.coerce.number().min(1).optional(),
   name: z.string().min(1).max(255),
@@ -22,11 +20,41 @@ export const AddProductSchema = z.object({
         { error: '"quantity" is required when, and only when, "model" is bulk' }
       )
   )
+  .min(1)
 })
   .refine(
     value => !value.prices.find(price => price.model !== value.pricingModel),
     { error: 'One or more of the prices uses a model that conflicts with the product\'s.' }
   )
+export type AddProductInput = z.infer<typeof AddProductSchema>
+
+export const EditProductSchema = {
+  form: () => {
+    const {
+      categoryId,
+      name,
+      description,
+      inStock,
+      published,
+      prices,
+    } = AddProductSchema.partial().shape
+
+    return z.object({
+      categoryId,
+      name,
+      description,
+      inStock,
+      published,
+      prices,
+    })
+  },
+  param: z.object({
+    id: z.coerce.number().min(1),
+  }),
+}
+export type EditProductInput = z.infer<ReturnType<typeof EditProductSchema.form>>
+export type EditProductParam = z.infer<typeof EditProductSchema.param>
+
 
 export const AddProductImageSchema = {
   form: z.object({

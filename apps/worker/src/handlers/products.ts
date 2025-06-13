@@ -2,12 +2,13 @@ import { Context } from 'hono'
 import type {
   AddProductImageInput,
   AddProductImageParam,
-  AddProductInput
+  AddProductInput,
+  EditProductInput
 } from '../validation/validation'
 import { prices, products } from '../schema'
 import { randomString, slugify } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
-import { eq } from 'drizzle-orm'
+import { eq, InferSelectModel } from 'drizzle-orm'
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const db = c.get('db')
@@ -76,6 +77,67 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
   return c.json({ message: 'Product added successfully', data }, 201)
 }
 
+export async function editProduct(
+  c: Context<AppEnv>,
+  input: EditProductInput,
+  productId: number
+) {
+  const db = c.get('db')
+  const store = c.get('store')
+
+  const product = await db.query.products.findFirst({
+    where: (product, { eq, and }) => and(
+      eq(product.id, productId),
+      eq(product.storeId, store.id)
+    ),
+  })
+
+  if (!product) {
+    return c.json({ message: 'Product not found' }, 404)
+  }
+  const badPrice = input.prices?.find(price => price.model !== product.pricingModel)
+  if (badPrice) {
+    return c.json({
+      message: `One or more of the prices uses a model that conflicts with the product's.`
+    }, 400)
+  }
+
+  const { data, error } = await tryCatch((async () => {
+    const { prices: pricesInput, ...partialProduct } = input
+    const [updated] = await db
+      .update(products)
+      .set({
+        ...partialProduct,
+      })
+      .where(eq(products.id, productId))
+      .returning()
+
+    let newPrices = <InferSelectModel<typeof prices>[]>[]
+    if (pricesInput && pricesInput.length > 0) {
+      await db.delete(prices).where(eq(prices.productId, productId))
+      newPrices = await db.insert(prices).values(
+        pricesInput.map(price => ({
+          productId: updated.id,
+          storeId: store.id,
+          currency: price.currency,
+          model: price.model,
+          amount: Math.round(price.amount),
+          amount_decimal: `${price.amount / 100}`,
+          quantity: price.quantity || null,
+        }))
+      ).returning()
+    }
+    return { ...updated, prices: newPrices }
+  })())
+
+  if (error) {
+    return c.json({ message: 'Failed to update product' }, 500)
+  }
+
+  return c.json({ message: 'Product updated successfully', data }, 200)
+}
+
+
 export async function addProductImage(
   c: Context<AppEnv>,
   { image }: AddProductImageInput,
@@ -132,7 +194,7 @@ export async function addProductImage(
   }, 201)
 }
 
-export async function preeProductImage( c: Context<AppEnv>, key: string) {
+export async function preeProductImage(c: Context<AppEnv>, key: string) {
   const object = await c.env.PRODUCT_MEDIA.get(key)
   if (!object) {
     return c.json({ message: 'Image not found' }, 404)

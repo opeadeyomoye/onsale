@@ -59,6 +59,12 @@ const app = new Hono<AppEnv>()
     zValidator('json', InputSchemas.AddProductSchema),
     c => productsHandler.addProduct(c, c.req.valid('json')),
   )
+  .patch(
+    '/products/:id',
+    zValidator('param', InputSchemas.EditProductSchema.param),
+    zValidator('json', InputSchemas.EditProductSchema.form()),
+    c => productsHandler.editProduct(c, c.req.valid('json'), c.req.valid('param').id)
+  )
   .post(
     '/products/:id/images/:colorId',
     zValidator('param', InputSchemas.AddProductImageSchema.param),
