@@ -1,6 +1,6 @@
 import { Link } from '@/components/catalyst/link'
 import { ChevronLeftIcon } from '@heroicons/react/16/solid'
-import AddProductFormsContainer from './forms'
+import AddProductFormsContainer from '../forms'
 
 export default function AddProductPage() {
   return <>
