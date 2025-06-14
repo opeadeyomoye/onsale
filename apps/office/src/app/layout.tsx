@@ -10,6 +10,7 @@ import {
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
+import AuthenticatedLayout from './authenticated'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,7 +37,7 @@ export default function RootLayout({
       <html lang="en" className="bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
         <body className={`dark ${geistSans.variable} ${geistMono.variable}`}>
           <Providers>
-            {children}
+            <AuthenticatedLayout>{children}</AuthenticatedLayout>
           </Providers>
         </body>
       </html>
