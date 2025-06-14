@@ -1,2 +1,0 @@
-ALTER TABLE `products` ADD `category_id` integer REFERENCES product_categories(id);--> statement-breakpoint
-CREATE UNIQUE INDEX `products_storeId_slug_pair_unique_idx` ON `products` (`store_id`,`slug`);

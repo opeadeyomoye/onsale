@@ -23,7 +23,7 @@ export const stores = sqliteTable('stores', {
 
 const idPlusStoreIdWithForeignKey = {
   id: integer()
-    .primaryKey({ autoIncrement: false }),
+    .primaryKey({ autoIncrement: true }),
   storeId: integer()
     .notNull()
     .references(() => stores.id),

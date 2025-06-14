@@ -1,5 +1,5 @@
 CREATE TABLE `product_prices` (
-	`id` integer PRIMARY KEY NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`store_id` integer NOT NULL,
 	`product_id` integer NOT NULL,
 	`pricing_model` text NOT NULL,
@@ -15,8 +15,9 @@ CREATE TABLE `product_prices` (
 );
 --> statement-breakpoint
 CREATE TABLE `products` (
-	`id` integer PRIMARY KEY NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`store_id` integer NOT NULL,
+	`category_id` integer,
 	`name` text(256) NOT NULL,
 	`slug` text(288) NOT NULL,
 	`description` text(1024),
@@ -28,12 +29,14 @@ CREATE TABLE `products` (
 	`created_at` text(26) DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
 	`updated_at` text(26),
 	`deleted_at` text(26),
-	FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`category_id`) REFERENCES `product_categories`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `products_storeId_slug_pair_unique_idx` ON `products` (`store_id`,`slug`);--> statement-breakpoint
 PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_product_categories` (
-	`id` integer PRIMARY KEY NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`store_id` integer NOT NULL,
 	`parent_category_id` integer,
 	`name` text(256) NOT NULL,
