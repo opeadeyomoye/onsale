@@ -25,6 +25,7 @@ import { AlertCircleIcon, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form'
+import { NumericFormat } from 'react-number-format'
 import { productAtom, ProductAtomType } from './atoms'
 import { PlusIcon } from '@heroicons/react/20/solid'
 import { productsActions } from '@/lib/actions'
@@ -101,11 +102,21 @@ export function BasicInfoForm(
           <Field>
             <Label>Cost per unit</Label>
             <div className="mt-3 grid grid-cols-1">
-              <Input
-                className="col-start-1 row-start-1 sm:max-w-2xs"
-                controlClassName="indent-6"
-                {...register('costPerUnit')}
-                required
+              <Controller
+                name="costPerUnit"
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <NumericFormat
+                    customInput={Input}
+                    className="col-start-1 row-start-1 sm:max-w-2xs"
+                    controlClassName="indent-6"
+                    required
+                    thousandSeparator=","
+                    value={value}
+                    onValueChange={({ floatValue }) => onChange(floatValue?.toString() || '')}
+                    onBlur={onBlur}
+                  />
+                )}
               />
               <span
                 aria-hidden="true"
