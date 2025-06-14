@@ -1,4 +1,7 @@
 import { EntityType } from '@onsale/worker'
 import { atom } from 'jotai'
 
-export const productAtom = atom<EntityType<'products'>>()
+export interface ProductAtomType extends EntityType<'products'> {
+  prices: Array<EntityType<'prices'>>
+}
+export const productAtom = atom<ProductAtomType>()

@@ -12,7 +12,6 @@ import {
 } from '@/components/catalyst/dialog'
 import { Divider } from '@/components/catalyst/divider'
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from '@/components/catalyst/fieldset'
-import { Heading } from '@/components/catalyst/heading'
 import { Input } from '@/components/catalyst/input'
 import { Text } from '@/components/catalyst/text'
 import { Textarea } from '@/components/catalyst/textarea'
@@ -25,7 +24,7 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircleIcon, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form'
-import { productAtom } from './atoms'
+import { productAtom, ProductAtomType } from './atoms'
 import { PlusIcon } from '@heroicons/react/20/solid'
 import { productsActions } from '@/lib/actions'
 import { EntityType } from '@onsale/worker'
@@ -33,29 +32,6 @@ import { getQueryClient } from '@/app/getQueryClient'
 import { getMediaUrl } from '@/lib/media'
 import { hexToRgba } from '@/lib/string'
 
-
-export default function AddProductFormsContainer() {
-  const product = useAtomValue(productAtom)
-  const [settingImages, setSettingImages] = useState(false)
-  const goToImages = () => {
-    setSettingImages(true)
-    setTimeout(() => document.getElementById('id-upload-images')?.scrollIntoView({
-      behavior: 'smooth',
-    }), 200) // Wait for the state to update before scrolling
-  }
-
-  return <>
-    <div className="mt-4 flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 lg:mt-8 dark:border-white/10">
-      <Heading>Add a new product</Heading>
-      <div className="flex gap-4">
-        {/* <Button outline>Refund</Button> */}
-      </div>
-    </div>
-
-    {/* {product?.id ? <SetImagesForm /> : null} */}
-    {settingImages ? <SetImagesForm /> : <BasicInfoForm next={goToImages} />}
-  </>
-}
 
 type BasicInfoInput = {
   name: string
@@ -65,44 +41,44 @@ type BasicInfoInput = {
   published: boolean
 }
 
-function BasicInfoForm({ next }: { next: Function }) {
-  const { control, handleSubmit, register } = useForm<BasicInfoInput>({
-    defaultValues: {
-      inStock: true,
-      published: false,
+export function BasicInfoForm(
+  { next, product }:
+  { next: Function, product?: ProductAtomType }
+) {
+  let defaultValues: Partial<BasicInfoInput> = {
+    inStock: true,
+    published: false,
+  }
+
+  // caller can pass in an existing product if they want product editing
+  if (product?.id) {
+    const { name, description, prices, inStock, published } = product
+    defaultValues = {
+      name,
+      description: description || undefined,
+      costPerUnit: prices[0]?.amount + '',
+      inStock,
+      published
     }
-  })
+  }
+  const { control, handleSubmit, register } = useForm<BasicInfoInput>({ defaultValues })
   const client = useRpc()
   const setProduct = useSetAtom(productAtom)
 
-  const addProductMutation = useMutation({
-    mutationFn: async (data: BasicInfoInput) => {
-      const post = await client.products.$post({
-        json: {
-          name: data.name,
-          description: data.description,
-          inStock: data.inStock,
-          published: data.published,
-          pricingModel: 'unit',
-          prices: [{
-            amount: data.costPerUnit,
-            currency: 'ngn',
-            model: 'unit',
-          }]
-        }
-      })
-      if (!post.ok) {
-        throw new Error('Failed to add product')
-      }
-      return await post.json()
+  const mutation = useMutation({
+    mutationFn: (data: BasicInfoInput) => {
+      // editing if we were passed an existing product. adding otherwise
+      return product?.id
+        ? productsActions(client).updateProduct(data, product.id)
+        : productsActions(client).addProduct(data)
     },
     onSuccess: (data) => {
       setProduct(data.data)
       next()
     },
   })
-  const onSubmit: SubmitHandler<BasicInfoInput> = data => addProductMutation.mutate(data)
-  const { isPending, isError } = addProductMutation
+  const onSubmit: SubmitHandler<BasicInfoInput> = data => mutation.mutate(data)
+  const { isPending, isError } = mutation
 
   return (
     <form className="mt-8 max-w-xl space-y-10" onSubmit={handleSubmit(onSubmit)}>
@@ -201,23 +177,23 @@ function BasicInfoForm({ next }: { next: Function }) {
   )
 }
 
-function SetImagesForm() {
+export function SetImagesForm({ product, back }: { product: ProductAtomType, back: Function }) {
   const client = useRpc()
-  const localProduct = useAtomValue(productAtom)
+  const setLocalProduct = useSetAtom(productAtom)
 
   const productQuery = useQuery({
-    queryKey: ['product', localProduct?.id],
-    queryFn: async () => productsActions(client).getProduct(localProduct?.id || 0),
+    queryKey: ['product', product.id],
+    queryFn: async () => productsActions(client).getProduct(product.id),
   })
 
   const images = productQuery.data?.images
 
   return (
     <Fieldset className="mt-12" id="id-upload-images">
-      <Legend>Upload images for {localProduct?.name}</Legend>
+      <Legend>Upload images for {product.name}</Legend>
       <Text>
-        Add images for each color that {localProduct?.name} comes in.
-        If {localProduct?.name} does not vary by color, upload its images under "No color".
+        Add images for each color that {product.name} comes in.
+        If {product.name} does not vary by color, upload its images under "No color".
       </Text>
 
       <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -227,8 +203,8 @@ function SetImagesForm() {
             <ColorImageSelector
               key={colorId}
               product={{
-                id: localProduct?.id || 0,
-                name: localProduct?.name || '',
+                id: product.id,
+                name: product.name,
                 images: images || {}
               }}
               color={color}
@@ -237,8 +213,8 @@ function SetImagesForm() {
         })}
         <ColorImageSelector
           product={{
-            id: localProduct?.id || 0,
-            name: localProduct?.name || '',
+            id: product.id,
+            name: product.name,
             images: images || {}
           }}
         />
@@ -247,7 +223,8 @@ function SetImagesForm() {
       <Divider className="my-8 md:my-12" />
 
       <div className="mt-6 flex justify-end gap-x-4">
-        {/* <Button outline>Back</Button> */}
+        <Button outline onClick={() => back()}>Back</Button>
+        {/** todo: clear local product on finish */}
         <Button href={'/products'}>Finish</Button>
       </div>
     </Fieldset>
