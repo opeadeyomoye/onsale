@@ -3,7 +3,8 @@ import type {
   AddProductImageInput,
   AddProductImageParam,
   AddProductInput,
-  EditProductInput
+  EditProductInput,
+  ListProductsQuery
 } from '../validation/validation'
 import { prices, products } from '../schema'
 import { randomString, slugify } from '../util/string'
@@ -139,6 +140,19 @@ export async function editProduct(
   return c.json({ message: 'Product updated successfully', data }, 200)
 }
 
+export async function listProducts(c: Context<AppEnv>, query: ListProductsQuery) {
+  const db = c.get('db')
+  const store = c.get('store')
+  const productsList = await db.query.products.findMany({
+    where: (product, { eq }) => eq(product.storeId, store.id),
+    with: {
+      prices: true,
+    },
+    orderBy: (product, { desc }) => desc(product.createdAt),
+  })
+
+  return c.json({ data: productsList }, 200)
+}
 
 export async function addProductImage(
   c: Context<AppEnv>,

@@ -54,6 +54,11 @@ const app = new Hono<AppEnv>()
     zValidator('param', z.object({ id: z.coerce.number() })),
     c => productsHandler.getProduct(c, c.req.valid('param').id)
   )
+  .get(
+    '/products',
+    zValidator('query', InputSchemas.ListProductsQuerySchema),
+    c => productsHandler.listProducts(c, c.req.valid('query'))
+  )
   .post(
     '/products',
     zValidator('json', InputSchemas.AddProductSchema),
