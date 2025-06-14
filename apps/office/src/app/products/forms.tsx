@@ -20,7 +20,7 @@ import useRpc from '@/hooks/useRpc'
 import { ChevronRightIcon } from '@heroicons/react/16/solid'
 import colors, { ColorId } from '@onsale/common/colors'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useSetAtom } from 'jotai'
 import { AlertCircleIcon, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -367,7 +367,7 @@ function UploadImagesDialog(
         Pictures of {product.name}
         {selectedColor.id === 'noColor' ? '' : ` in ${selectedColor.name}`}
       </DialogTitle>
-      <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+      <DialogBody className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
         {images.map(image => (
           <div className="shrink-0" key={image.url}>
             <img
@@ -405,10 +405,25 @@ function UploadImagesDialog(
               </label>
           )}
         </div>
-      </div>
-      <DialogDescription className="mt-6">
+      </DialogBody>
+      <DialogDescription className="mt-4 flex items-center justify-between">
         You can select several images at once.
       </DialogDescription>
+      <DialogActions>
+        <Button
+          outline
+          onClick={() => setOpen(false)}
+          disabled={isPending}
+        >
+          Close
+        </Button>
+        <Button
+          onClick={() => setOpen(false)}
+          disabled={isPending}
+        >
+          Done
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }
