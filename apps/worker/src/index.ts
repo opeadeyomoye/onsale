@@ -18,7 +18,7 @@ const app = new Hono<AppEnv>()
         : null
     },
     allowHeaders: ['Authorization', 'Content-Type'],
-    allowMethods: ['get', 'post']
+    allowMethods: ['GET', 'POST', 'PATCH']
   }))
   .use(clerkMiddleware(), requireClerkAuth)
   .use(async (c, next) => {
@@ -33,7 +33,7 @@ const app = new Hono<AppEnv>()
       where: (store, { eq }) => eq(store.creatorId, c.get('clerkAuth')?.userId || '')
     })
     if (!store) {
-      return c.json({ message: 'Unknown store' }, 400)
+      return c.json({ message: 'Unknown store' }, 404)
     }
     c.set('store', store)
     await next()

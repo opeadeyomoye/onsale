@@ -56,7 +56,7 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
     })
       .returning()
 
-    await db.insert(prices).values(
+    const savedPrices = await db.insert(prices).values(
       pricesInput.map(price => ({
         productId: product.id,
         storeId: store.id,
@@ -66,8 +66,9 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
         amount_decimal: `${price.amount / 100}`,
         quantity: price.quantity || null,
       }))
-    )
-    return product
+    ).returning()
+
+    return { ...product, prices: savedPrices }
   })())
   if (error) {
 
@@ -108,6 +109,7 @@ export async function editProduct(
       .update(products)
       .set({
         ...partialProduct,
+        updatedAt: (new Date()).toISOString(),
       })
       .where(eq(products.id, productId))
       .returning()
