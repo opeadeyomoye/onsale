@@ -28,6 +28,11 @@ const app = new Hono<AppEnv>()
     }))
     await next()
   })
+  .post(
+    '/stores',
+    zValidator('json', z.object({ name: z.string().min(4).max(256) })),
+    c => storesHandler.createStore(c, c.req.valid('json').name)
+  )
   .use(async (c, next) => {
     const store = await c.get('db').query.stores.findFirst({
       where: (store, { eq }) => eq(store.creatorId, c.get('clerkAuth')?.userId || '')
@@ -44,11 +49,6 @@ const app = new Hono<AppEnv>()
       store: { name, slug, id }
     })
   })
-  .post(
-    '/stores',
-    zValidator('json', z.object({ name: z.string().min(4).max(256) })),
-    c => storesHandler.createStore(c, c.req.valid('json').name)
-  )
   .get(
     '/products/:id',
     zValidator('param', z.object({ id: z.coerce.number() })),
