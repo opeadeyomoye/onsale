@@ -38,7 +38,7 @@ import { hexToRgba } from '@/lib/string'
 type BasicInfoInput = {
   name: string
   description: string
-  costPerUnit: string
+  costPerUnit: number
   inStock: boolean
   published: boolean
 }
@@ -58,7 +58,7 @@ export function BasicInfoForm(
     defaultValues = {
       name,
       description: description || undefined,
-      costPerUnit: prices[0]?.amount + '',
+      costPerUnit: ((prices[0]?.amount || 0) / 100),
       inStock,
       published
     }
@@ -113,7 +113,7 @@ export function BasicInfoForm(
                     required
                     thousandSeparator=","
                     value={value}
-                    onValueChange={({ floatValue }) => onChange(floatValue?.toString() || '')}
+                    onValueChange={({ floatValue }) => onChange(floatValue || 0)}
                     onBlur={onBlur}
                   />
                 )}

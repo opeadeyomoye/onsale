@@ -6,7 +6,7 @@ type NewProductInput = {
   description: string
   inStock: boolean
   published: boolean
-  costPerUnit: string
+  costPerUnit: number
 }
 
 export const productsActions = (client: Client) => ({
@@ -22,7 +22,7 @@ export const productsActions = (client: Client) => ({
         published: data.published,
         pricingModel: 'unit',
         prices: [{
-          amount: data.costPerUnit,
+          amount: data.costPerUnit * 100,
           currency: 'ngn',
           model: 'unit',
         }]
@@ -41,7 +41,7 @@ export const productsActions = (client: Client) => ({
 
     if (costPerUnit) {
       input.prices = [{
-        amount: costPerUnit,
+        amount: costPerUnit * 100,
         currency: 'ngn',
         model: 'unit',
       }]
