@@ -10,6 +10,15 @@ type NewProductInput = {
 }
 
 export const productsActions = (client: Client) => ({
+  listProducts: (query?: { page?: number, limit?: number }) =>
+    client.products.$get({
+      query: {
+        page: query?.page?.toString() || '1',
+        limit: query?.limit?.toString() || '10',
+      }
+    })
+      .then(res => res.ok ? res.json() : Promise.reject(res.json())),
+
   getProduct: (id: number) => client.products[':id'].$get({ param: { id: `${id}` }})
     .then(res => res.ok ? res.json() : Promise.reject(res.json())),
 
