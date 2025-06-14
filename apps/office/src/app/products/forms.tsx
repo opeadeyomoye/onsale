@@ -22,6 +22,7 @@ import colors, { ColorId } from '@onsale/common/colors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircleIcon, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type SubmitHandler, useForm } from 'react-hook-form'
 import { productAtom, ProductAtomType } from './atoms'
@@ -179,12 +180,17 @@ export function BasicInfoForm(
 
 export function SetImagesForm({ product, back }: { product: ProductAtomType, back: Function }) {
   const client = useRpc()
+  const router = useRouter()
   const setLocalProduct = useSetAtom(productAtom)
 
   const productQuery = useQuery({
     queryKey: ['product', product.id],
     queryFn: async () => productsActions(client).getProduct(product.id),
   })
+  const onFinish = () => {
+    setLocalProduct(undefined)
+    router.push('/products')
+  }
 
   const images = productQuery.data?.images
 
@@ -224,8 +230,7 @@ export function SetImagesForm({ product, back }: { product: ProductAtomType, bac
 
       <div className="mt-6 flex justify-end gap-x-4">
         <Button outline onClick={() => back()}>Back</Button>
-        {/** todo: clear local product on finish */}
-        <Button href={'/products'}>Finish</Button>
+        <Button onClick={onFinish}>Finish</Button>
       </div>
     </Fieldset>
   )
