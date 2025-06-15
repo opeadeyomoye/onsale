@@ -28,29 +28,6 @@ export default function ProductsList() {
     queryKey: ['products'],
     queryFn: async () => productsActions(client).listProducts(),
   })
-  const sampleProducts = [
-    {
-      id: '1',
-      name: 'Product 1',
-      price: 2999,
-      description: 'This is a sample product description.',
-      imageUrl: 'https://placehold.co/150.png?text=No+Image',
-    },
-    {
-      id: '2',
-      name: 'Product 2',
-      price: 4999,
-      description: 'This is another sample product description.',
-      imageUrl: 'https://placehold.co/150.png?text=No+Image',
-    },
-    {
-      id: '3',
-      name: 'Product 3',
-      price: 1999,
-      description: 'This is yet another sample product description.',
-      imageUrl: 'https://placehold.co/150.png?text=No+Image',
-    },
-  ]
   if (!data.data.length) {
     return <NoProducts />
   }
@@ -73,7 +50,10 @@ export default function ProductsList() {
       </TableHead>
       <TableBody>
         {data.data.map((product) => (
-          <TableRow key={product.id} href={`/products/${product.slug}`} className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <TableRow
+            key={product.id}
+            href={`/products/${product.id}-${product.slug}`}
+          >
             <TableCell>
               <div className="flex items-center gap-4">
                 <Avatar src={getDisplayImageSrc(product)} className="size-10" />

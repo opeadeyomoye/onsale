@@ -74,11 +74,13 @@ export function BasicInfoForm(
         ? productsActions(client).updateProduct(data, product.id)
         : productsActions(client).addProduct(data)
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setProduct(data.data)
+      await queryClient.invalidateQueries({ queryKey: ['products'] })
       next()
     },
   })
+  const queryClient = getQueryClient()
   const onSubmit: SubmitHandler<BasicInfoInput> = data => mutation.mutate(data)
   const { isPending, isError } = mutation
 
