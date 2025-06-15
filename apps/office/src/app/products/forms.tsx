@@ -45,7 +45,7 @@ type BasicInfoInput = {
 
 export function BasicInfoForm(
   { next, product }:
-  { next: Function, product?: ProductAtomType }
+  { next: () => void, product?: ProductAtomType }
 ) {
   let defaultValues: Partial<BasicInfoInput> = {
     inStock: true,
@@ -94,7 +94,7 @@ export function BasicInfoForm(
         <FieldGroup>
           <Field>
             <Label>Product Name</Label>
-            <Description>The name you'd like people to see in their cart.</Description>
+            <Description>The name you&apos;d like people to see in their cart.</Description>
             <Input {...register('name')} required />
           </Field>
           <Field>
@@ -160,7 +160,7 @@ export function BasicInfoForm(
             />
             <Label>Published</Label>
             <Description>
-              Makes this product discoverable from your store's website.
+              Makes this product discoverable from your store&apos;s website.
               Leave this unchecked if you just want to add the product to your catalog for now.
             </Description>
           </CheckboxField>
@@ -192,14 +192,15 @@ export function BasicInfoForm(
   )
 }
 
-export function SetImagesForm({ product, back }: { product: ProductAtomType, back: Function }) {
+export function SetImagesForm({ product, back }: { product: ProductAtomType, back: () => void }) {
   const client = useRpc()
   const router = useRouter()
   const setLocalProduct = useSetAtom(productAtom)
+  const actions = productsActions(client)
 
   const productQuery = useQuery({
     queryKey: ['product', product.id],
-    queryFn: async () => productsActions(client).getProduct(product.id),
+    queryFn: async () => actions.getProduct(product.id),
   })
   const onFinish = () => {
     setLocalProduct(undefined)
@@ -213,7 +214,7 @@ export function SetImagesForm({ product, back }: { product: ProductAtomType, bac
       <Legend>Upload images for {product.name}</Legend>
       <Text>
         Add images for each color that {product.name} comes in.
-        If {product.name} does not vary by color, upload its images under "No color".
+        If {product.name} does not vary by color, upload its images under &quot;No color&quot;.
       </Text>
 
       <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-3 gap-6">

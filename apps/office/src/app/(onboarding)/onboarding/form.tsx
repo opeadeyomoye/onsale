@@ -114,7 +114,7 @@ function AllGood() {
           Start adding products
         </Button>
 
-        <Link className="mt-2 block text-sm text-center text-slate-800 dark:text-slate-200" href="/">I'll do that later</Link>
+        <Link className="mt-2 block text-sm text-center text-slate-800 dark:text-slate-200" href="/">I&apos;ll do that later</Link>
       </div>
     </div>
   )

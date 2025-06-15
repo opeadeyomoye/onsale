@@ -8,7 +8,7 @@ import useRpc from '@/hooks/useRpc'
 import { productsActions } from '@/lib/actions'
 import { getMediaUrl } from '@/lib/media'
 import { PlusIcon } from '@heroicons/react/16/solid'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 
 const NoProducts = () => (
   <div className="mt-6 border-t border-zinc-950/10 pb-6 dark:border-white/10">
@@ -24,11 +24,12 @@ const NoProducts = () => (
 
 export default function ProductsList() {
   const client = useRpc()
-  const { data } = useSuspenseQuery({
+  const actions = productsActions(client)
+  const { data } = useQuery({
     queryKey: ['products'],
-    queryFn: async () => productsActions(client).listProducts(),
+    queryFn: async () => actions.listProducts(),
   })
-  if (!data.data.length) {
+  if (!data?.data.length) {
     return <NoProducts />
   }
 

@@ -1,6 +1,8 @@
 
 .turbo
 .next
+.open-next
 node_modules
 .env
 .dev.vars
+.wrangler

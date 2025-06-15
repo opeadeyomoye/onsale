@@ -9,9 +9,10 @@ import { SetImagesForm, BasicInfoForm } from '../forms'
 
 export default function EditProductFormsContainer({ productId }: { productId: number }) {
   const client = useRpc()
+  const actions = productsActions(client)
   const { data: product } = useSuspenseQuery({
     queryKey: ['product', productId],
-    queryFn: async () => productsActions(client).getProduct(productId),
+    queryFn: async () => actions.getProduct(productId),
   })
   const [settingImages, setSettingImages] = useState(false)
 
