@@ -17,9 +17,9 @@
       "custom_domain": true
     }
   ],
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
+  "vars": {
+    "CORS_ORIGINS": "https://office.zesticommerce.com",
+  },
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
