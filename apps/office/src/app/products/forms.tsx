@@ -76,6 +76,7 @@ export function BasicInfoForm(
     },
     onSuccess: async (data) => {
       setProduct(data.data)
+      await queryClient.invalidateQueries({ queryKey: ['product', product?.id] })
       await queryClient.invalidateQueries({ queryKey: ['products'] })
       next()
     },
@@ -140,8 +141,8 @@ export function BasicInfoForm(
             <Controller
               name="inStock"
               control={control}
-              render={({ field: { onChange, onBlur } }) => (
-                <Checkbox onChange={onChange} onBlur={onBlur} defaultChecked />
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Checkbox onChange={onChange} onBlur={onBlur} defaultChecked={value} />
               )}
             />
             <Label>In stock and available to buy</Label>
@@ -153,8 +154,8 @@ export function BasicInfoForm(
             <Controller
               name="published"
               control={control}
-              render={({ field: { onChange, onBlur } }) => (
-                <Checkbox onChange={onChange} onBlur={onBlur} />
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Checkbox onChange={onChange} onBlur={onBlur} defaultChecked={value} />
               )}
             />
             <Label>Published</Label>
