@@ -11,6 +11,12 @@
     "head_sampling_rate": 1
   },
   "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "api.zesticommerce.com",
+      "custom_domain": true
+    }
+  ],
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
