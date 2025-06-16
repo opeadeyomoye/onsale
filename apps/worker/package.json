@@ -4,6 +4,7 @@
     "dev": "pnpm --filter @onsale/worker --parallel \"/^dev:.*/\"",
     "dev:tsc": "tsc -p tsconfig.build.json --watch",
     "dev:wrangler": "wrangler dev",
+    "build": "tsc -p tsconfig.build.json",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "generate": "drizzle-kit generate",
