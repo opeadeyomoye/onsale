@@ -20,6 +20,11 @@ const app = new Hono<AppEnv>()
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['GET', 'POST', 'PATCH']
   }))
+  .get(
+    '/product-media/:key',
+    zValidator('param', z.object({ key: z.string() })),
+    c => productsHandler.preeProductImage(c, c.req.valid('param').key)
+  )
   .use(clerkMiddleware(), requireClerkAuth)
   .use(async (c, next) => {
     c.set('db', drizzle(c.env.DB, {
@@ -75,11 +80,6 @@ const app = new Hono<AppEnv>()
     zValidator('param', InputSchemas.AddProductImageSchema.param),
     zValidator('form', InputSchemas.AddProductImageSchema.form),
     c => productsHandler.addProductImage(c, c.req.valid('form'), c.req.valid('param'))
-  )
-  .get(
-    '/product-media/:key',
-    zValidator('param', z.object({ key: z.string() })),
-    c => productsHandler.preeProductImage(c, c.req.valid('param').key)
   )
 
 export default app
