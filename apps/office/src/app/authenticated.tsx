@@ -93,7 +93,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
             <Dropdown>
               <DropdownButton as={SidebarItem} className="lg:mb-2.5">
                 <Avatar src="/icon.png" />
-                <SidebarLabel>onsale</SidebarLabel>
+                <SidebarLabel>{/**onsale*/}</SidebarLabel>
                 {/* <ChevronDownIcon /> */}
               </DropdownButton>
               {/* <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
