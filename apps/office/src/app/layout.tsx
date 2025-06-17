@@ -7,6 +7,7 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
+import { dark } from '@clerk/themes'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
@@ -33,7 +34,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider signUpForceRedirectUrl={`/onboarding`} signInForceRedirectUrl={`/onboarding`}>
+    <ClerkProvider
+      appearance={{ baseTheme: dark }}
+      signUpForceRedirectUrl={`/onboarding`}
+      signInForceRedirectUrl={`/onboarding`}
+    >
       <html lang="en" className="bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
         <body className={`dark ${geistSans.variable} ${geistMono.variable}`}>
           <Providers>

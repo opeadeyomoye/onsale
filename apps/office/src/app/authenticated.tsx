@@ -20,6 +20,7 @@ import {
   SidebarSpacer,
 } from '@/components/catalyst/sidebar'
 import { SidebarLayout } from '@/components/catalyst/sidebar-layout'
+import { UserButton } from '@clerk/nextjs'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
@@ -166,8 +167,17 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
               </SidebarItem>
             </SidebarSection> */}
           </SidebarBody>
-          {/* <SidebarFooter className="max-lg:hidden">
-            <Dropdown>
+          <SidebarFooter className="max-lg:hidden">
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: 'size-10',
+                  userButtonAvatarImage: 'rounded-full',
+                },
+              }}
+              showName={true}
+            />
+            {/* <Dropdown>
               <DropdownButton as={SidebarItem}>
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar src="/profile-photo.jpg" className="size-10" square alt="" />
@@ -204,8 +214,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
                   <DropdownLabel>Sign out</DropdownLabel>
                 </DropdownItem>
               </DropdownMenu>
-            </Dropdown>
-          </SidebarFooter> */}
+            </Dropdown> */}
+          </SidebarFooter>
         </Sidebar>
       }
     >
