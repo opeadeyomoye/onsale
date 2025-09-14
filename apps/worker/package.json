@@ -31,6 +31,7 @@
     "@types/node": "22",
     "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.44.0",
+    "effect": "^3.17.13",
     "hono": "4.7.9",
     "zod": "^3.25.30"
   },
