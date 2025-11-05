@@ -2,7 +2,6 @@ import * as Effect from 'effect/Effect'
 import CloudflareD1InstanceTag, { CloudflareD1Instance, DatasourceError, effectfulQuery, wrappedD1Query } from '../CloudflareD1Instance'
 import { and, asc, desc, eq, InferSelectModel } from 'drizzle-orm'
 import { products } from '@/schema'
-import { DrizzleQueryError } from 'drizzle-orm/errors'
 
 export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
   '@/app/datasource/repos/ProductsRepo',
@@ -41,12 +40,18 @@ export class ProductsRepo {
     this.query = db.query.products
   }
 
-  findById(id: string | number) {
-    return {
-      id,
-      name: 'The Juice',
-      created: '1970-01-01'
-    }
+  findById({ id, storeId }: Pick<Required<FindByArgs>, 'id' | 'storeId'>) {
+    return wrappedD1Query(
+      this.query.findFirst({
+        where: (product) => and(
+          eq(product.id, id),
+          eq(product.storeId, storeId)
+        ),
+        with: {
+          prices: true,
+        },
+      })
+    )
   }
 
   listForStore(storeId: number) {

@@ -16,18 +16,12 @@ import { runEffectPromiseWithMainLayer } from '@/provider'
 
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
-  const db = c.get('db')
   const store = c.get('store')
 
-  const product = await db.query.products.findFirst({
-    where: (product, { eq, and }) => and(
-      eq(product.id, productId),
-      eq(product.storeId, store.id)
-    ),
-    with: {
-      prices: true,
-    },
-  })
+  const product = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+    const repo = yield* ProductsRepoTag
+    return yield* repo.findById({ id: productId, storeId: store.id })
+  }))
 
   if (!product) {
     return c.json({ message: 'Product not found' }, 404)
