@@ -10,6 +10,10 @@ import { prices, products } from '../schema'
 import { randomString, slugify } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
 import { eq, InferSelectModel } from 'drizzle-orm'
+import * as Effect from 'effect/Effect'
+import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
+import { runEffectPromiseWithMainLayer } from '@/provider'
+
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const db = c.get('db')
@@ -141,15 +145,15 @@ export async function editProduct(
 }
 
 export async function listProducts(c: Context<AppEnv>, query: ListProductsQuery) {
-  const db = c.get('db')
   const store = c.get('store')
-  const productsList = await db.query.products.findMany({
-    where: (product, { eq }) => eq(product.storeId, store.id),
-    with: {
-      prices: true,
-    },
-    orderBy: (product, { desc }) => desc(product.createdAt),
-  })
+
+  const productsList = await runEffectPromiseWithMainLayer(c, Effect.gen(
+    function* () {
+      const productsRepo = yield* ProductsRepoTag
+
+      return yield* productsRepo.listForStore(store.id)
+    }
+  ))
 
   return c.json({ data: productsList }, 200)
 }

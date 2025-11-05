@@ -2,7 +2,7 @@ import * as Effect from 'effect/Effect'
 import * as EffectContext from 'effect/Context'
 import { Context } from 'hono'
 import { InventoryServiceTag } from './context/inventory/inventoryService'
-import { ProductsRepo, ProductsRepoTag } from './datasource/repos/ProductsRepo'
+import { ProductsRepoTag } from './datasource/repos/ProductsRepo'
 import CloudflareD1InstanceTag from './datasource/CloudflareD1Instance'
 import * as Layer from 'effect/Layer'
 
@@ -11,7 +11,7 @@ export type AppRequirements =
   | ProductsRepoTag
   | InventoryServiceTag
 
-export function runEffectPromiseWithAppContext<A, E>(
+export function runEffectPromiseWithMainLayer<A, E>(
   c: Context<AppEnv>,
   e: Effect.Effect<A, E, AppRequirements>
 ) {
