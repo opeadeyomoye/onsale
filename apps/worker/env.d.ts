@@ -1,4 +1,3 @@
-
 type WorkerBindings = {
   CLERK_PUBLISHABLE_KEY: string
   CLERK_SECRET_KEY: string
@@ -24,6 +23,7 @@ interface AppEnv {
     store: import('drizzle-orm').InferModelFromColumns<
       AppDatabaseSchema['stores']['_']['columns']
     >
+    mainLayer: import('effect/Layer').Layer<import('@/provider').AppRequirements>
   }
 }
 

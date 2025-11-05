@@ -4,11 +4,22 @@ import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors'
 import z from 'zod'
 import { drizzle } from 'drizzle-orm/d1'
-import * as productsHandler from './handlers/products'
+import * as productsHandler from '@/handlers/products'
 import * as storesHandler from './handlers/stores'
 import requireClerkAuth from './middleware/requireClerkAuth'
 import * as dbSchema from './schema'
 import * as InputSchemas from './validation/validation'
+import { bootstrapMainLayer } from './provider'
+
+// function to hook effect-context up with global services
+// ^ runs in middleware before the request handlers
+
+/* then handlers run one or more effects in their execution,
+ - handling any propagated errors and returning a response at the end
+ */
+
+// oooorr have an AppProgramRunner that is factory-fitted with the required context,
+// that takes an Effect.gen and runs it, catching any general errors
 
 const app = new Hono<AppEnv>()
   .use(cors({
@@ -20,6 +31,10 @@ const app = new Hono<AppEnv>()
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['GET', 'POST', 'PATCH']
   }))
+  .use(async (c, next) => {
+    c.set('mainLayer', bootstrapMainLayer(c))
+    await next()
+  })
   .get(
     '/product-media/:key',
     zValidator('param', z.object({ key: z.string() })),
