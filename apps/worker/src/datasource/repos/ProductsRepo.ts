@@ -1,7 +1,7 @@
 import * as Effect from 'effect/Effect'
-import CloudflareD1InstanceTag, { CloudflareD1Instance, DatasourceError, effectfulQuery, wrappedD1Query } from '../CloudflareD1Instance'
-import { and, asc, desc, eq, InferSelectModel } from 'drizzle-orm'
-import { products } from '@/schema'
+import CloudflareD1InstanceTag, { CloudflareD1Instance, wrappedD1Query } from '../CloudflareD1Instance'
+import { and, asc, desc, eq, InferInsertModel, InferSelectModel } from 'drizzle-orm'
+import { prices, products } from '@/schema'
 
 export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
   '@/app/datasource/repos/ProductsRepo',
@@ -14,6 +14,8 @@ export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
 ) {}
 
 type SelectProductType = InferSelectModel<typeof products>
+type InsertProductType = InferInsertModel<typeof products>
+type InsertPricesType = InferInsertModel<typeof prices>
 type OptionalFindByColumns = Partial<
   Pick<
     SelectProductType,
@@ -38,6 +40,34 @@ export class ProductsRepo {
   constructor(db: CloudflareD1Instance) {
     this.db = db
     this.query = db.query.products
+  }
+
+  exists({ id, storeId, slug }: FindByArgs) {
+    const columns = products._.columns
+    const where = [eq(columns.storeId, storeId)]
+    if (id) {
+      where.push(eq(columns.id, id))
+    }
+    if (slug) {
+      where.push(eq(columns.slug, slug))
+    }
+
+    return wrappedD1Query(
+      this.query.findFirst({ where: () => and(...where) })
+        .then(record => record ? true : false)
+    )
+  }
+
+  add(input: InsertProductType) {
+    return wrappedD1Query(
+      this.db.insert(products).values(input).returning()
+    )
+  }
+
+  addPrices(input: InsertPricesType[]) {
+    return wrappedD1Query(
+      this.db.insert(prices).values(input)
+    )
   }
 
   findById({ id, storeId }: Pick<Required<FindByArgs>, 'id' | 'storeId'>) {
@@ -108,6 +138,6 @@ export class ProductsRepo {
 
     return limit === 1
       ? [this.query.findFirst(config)]
-      : [this.query.findMany(config)]
+      : this.query.findMany(config)
   }
 }

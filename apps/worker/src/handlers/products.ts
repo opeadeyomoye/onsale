@@ -11,70 +11,59 @@ import { randomString, slugify } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
 import { eq, InferSelectModel } from 'drizzle-orm'
 import * as Effect from 'effect/Effect'
+import * as Either from 'effect/Either'
 import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
 import { runEffectPromiseWithMainLayer } from '@/provider'
+import * as Schedule from 'effect/Schedule'
+import { InventoryServiceTag } from '@/context/inventory/inventoryService'
 
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const store = c.get('store')
 
-  const product = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+  return await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
     const repo = yield* ProductsRepoTag
-    return yield* repo.findById({ id: productId, storeId: store.id })
+    const result = yield* Effect.either(
+      Effect.retry(
+        repo.findById({
+          id: productId,
+          storeId: store.id
+        }),
+        { times: 2 , schedule: Schedule.fixed('100 millis')}
+      )
+    )
+
+    if (Either.isLeft(result)) {
+      return c.json({ message: 'Something went wrong. Please try again later' }, 500)
+    }
+
+    const product = result.right
+    if (!product) {
+      return c.json({ message: 'Product not found' }, 404)
+    }
+
+    return c.json(product, 200)
   }))
-
-  if (!product) {
-    return c.json({ message: 'Product not found' }, 404)
-  }
-
-  return c.json(product, 200)
 }
 
 export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
-  const db = c.get('db')
   const store = c.get('store')
 
-  // store pricing, product in db.
-  // that's it
-  let slug = slugify(input.name)
-  const existing = await db.query.products.findFirst({
-    where: (product, { eq, and }) => and(
-      eq(product.storeId, store.id),
-      eq(product.slug, slug)
-    ),
-  })
-  if (existing) {
-    slug = `${slug}-${Number(Date.now()).toString(36)}`
-  }
-  const { data, error } = await tryCatch((async () => {
-    const { prices: pricesInput, ...partialProduct } = input
-    const [product] = await db.insert(products).values({
-      ...partialProduct, // todo: limit categoryId to store's owned categories
-      storeId: store.id,
-      slug,
-    })
-      .returning()
+  return await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+    const inventoryService = yield* InventoryServiceTag
+    const result = yield* Effect.either(
+      inventoryService.addProduct({ storeId: store.id, input }
+    ))
 
-    const savedPrices = await db.insert(prices).values(
-      pricesInput.map(price => ({
-        productId: product.id,
-        storeId: store.id,
-        currency: price.currency,
-        model: price.model,
-        amount: Math.round(price.amount),
-        amount_decimal: `${price.amount / 100}`,
-        quantity: price.quantity || null,
-      }))
-    ).returning()
+    if (Either.isLeft(result)) {
+      return c.json({ message: 'Failed to add product' }, 500)
+    }
 
-    return { ...product, prices: savedPrices }
-  })())
-  if (error) {
-
-    return c.json({ message: 'Failed to add product' }, 500)
-  }
-
-  return c.json({ message: 'Product added successfully', data }, 201)
+    return c.json({
+      message: 'Product added successfully',
+      data: result.right
+    }, 201)
+  }))
 }
 
 export async function editProduct(
