@@ -4,7 +4,7 @@ import { type AnySQLiteColumn, integer, sqliteTable, text, uniqueIndex } from 'd
 
 const defaultTimestamps = {
   createdAt: text({ length: 26 }).notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text({ length: 26 }),
+  updatedAt: text({ length: 26 }).$onUpdate(() => sql`(CURRENT_TIMESTAMP)`),
   deletedAt: text({ length: 26 })
 }
 

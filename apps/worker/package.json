@@ -9,7 +9,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "generate": "drizzle-kit generate",
     "migrate": "wrangler d1 migrations apply onsale-db --local",
-    "migrate:prod": "wrangler d1 migrations apply onsale-db --remote"
+    "migrate:prod": "wrangler d1 migrations apply onsale-db --remote",
+    "size-check": "wrangler deploy --outdir dist/bundled/ --dry-run"
   },
   "types": "./src/index.d.ts",
   "exports": {

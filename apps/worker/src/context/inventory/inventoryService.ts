@@ -1,8 +1,9 @@
-import { Effect, Context, Layer } from 'effect'
-import { xid } from 'zod/v4'
+import { Effect } from 'effect'
 import { ProductsRepo, ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
-import { AddProductInput } from '@/validation/validation'
+import { AddProductInput, EditProductInput } from '@/validation/validation'
 import { slugify } from '@/util/string'
+import { prices } from '@/schema'
+import { InferSelectModel } from 'drizzle-orm'
 
 /*
  - Now, products can be added and edited from at least 2 interfaces:
@@ -45,6 +46,10 @@ export class InventoryServiceTag extends Effect.Service<InventoryServiceTag>()(
 type AddProductArgs = {
   storeId: number
   input: AddProductInput
+}
+type EditProductArgs = {
+  id: number
+  input: EditProductInput
 }
 
 export class InventoryService {
@@ -99,8 +104,29 @@ export class InventoryService {
     })
   }
 
-  removeProduct(product: string) {
-    return
+  editProduct({ id, input }: EditProductArgs) {
+    const repo = this.productsRepo
+
+    const { prices: pricesInput, ...partialProduct } = input
+
+    return Effect.gen(function*() {
+      const [updated] = yield* repo.update({ id, input: partialProduct })
+      let newPrices = <InferSelectModel<typeof prices>[]>[]
+
+      if (pricesInput && pricesInput.length > 0) {
+        newPrices = yield* repo.updatePrices({
+          productId: updated.id,
+          storeId: updated.storeId,
+          input: pricesInput
+        })
+      }
+
+      return { ...updated, prices: newPrices }
+    })
+  }
+
+  removeProduct(product: string): false {
+    return false
   }
 }
 

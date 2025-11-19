@@ -64,3 +64,16 @@ export function wrappedD1Query<T>(operation: Promise<T>) {
     },
   })
 }
+
+export function wrappedD1Operation<T>(operation: () => Promise<T>) {
+  return Effect.tryPromise({
+    try: () => operation(),
+    catch: (cause) => {
+      const options = cause instanceof DrizzleQueryError
+        ? { type: 'DrizzleQueryError', cause } as const
+        : { type: 'unknown', cause } as const
+
+      return new DatasourceError(options)
+    },
+  })
+}

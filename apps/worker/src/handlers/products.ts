@@ -6,10 +6,10 @@ import type {
   EditProductInput,
   ListProductsQuery
 } from '../validation/validation'
-import { prices, products } from '../schema'
-import { randomString, slugify } from '../util/string'
+import { products } from '../schema'
+import { randomString } from '../util/string'
 import { tryCatch } from '../util/tryCatch'
-import { eq, InferSelectModel } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import * as Effect from 'effect/Effect'
 import * as Either from 'effect/Either'
 import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
@@ -74,55 +74,31 @@ export async function editProduct(
   const db = c.get('db')
   const store = c.get('store')
 
-  const product = await db.query.products.findFirst({
-    where: (product, { eq, and }) => and(
-      eq(product.id, productId),
-      eq(product.storeId, store.id)
-    ),
-  })
+  const failedCheck = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+    const repo = yield* ProductsRepoTag
+    const product = yield* repo.findById({
+      id: productId,
+      storeId: store.id
+    })
 
-  if (!product) {
-    return c.json({ message: 'Product not found' }, 404)
-  }
-  const badPrice = input.prices?.find(price => price.model !== product.pricingModel)
-  if (badPrice) {
-    return c.json({
-      message: `One or more of the prices uses a model that conflicts with the product's.`
-    }, 400)
-  }
-
-  const { data, error } = await tryCatch((async () => {
-    const { prices: pricesInput, ...partialProduct } = input
-    const [updated] = await db
-      .update(products)
-      .set({
-        ...partialProduct,
-        updatedAt: (new Date()).toISOString(),
-      })
-      .where(eq(products.id, productId))
-      .returning()
-
-    let newPrices = <InferSelectModel<typeof prices>[]>[]
-    if (pricesInput && pricesInput.length > 0) {
-      await db.delete(prices).where(eq(prices.productId, productId))
-      newPrices = await db.insert(prices).values(
-        pricesInput.map(price => ({
-          productId: updated.id,
-          storeId: store.id,
-          currency: price.currency,
-          model: price.model,
-          amount: Math.round(price.amount),
-          amount_decimal: `${price.amount / 100}`,
-          quantity: price.quantity || null,
-        }))
-      ).returning()
+    if (!product) {
+      return c.json({ message: 'Product not found' }, 404)
     }
-    return { ...updated, prices: newPrices }
-  })())
 
-  if (error) {
-    return c.json({ message: 'Failed to update product' }, 500)
-  }
+    const badPrice = input.prices?.find(price => price.model !== product.pricingModel)
+    if (badPrice) {
+      return c.json({
+        message: `One or more of the prices uses a model that conflicts with the product's.`
+      }, 400)
+    }
+  }))
+
+  if (failedCheck) return failedCheck
+
+  const data = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+    const inventoryService = yield* InventoryServiceTag
+    return yield* inventoryService.editProduct({ id: productId, input })
+  }))
 
   return c.json({ message: 'Product updated successfully', data }, 200)
 }
