@@ -1,7 +1,8 @@
 import * as Effect from 'effect/Effect'
-import CloudflareD1InstanceTag, { CloudflareD1Instance, wrappedD1Query } from '../CloudflareD1Instance'
+import CloudflareD1InstanceTag, { CloudflareD1Instance, wrappedD1Operation, wrappedD1Query } from '../CloudflareD1Instance'
 import { and, asc, desc, eq, InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { prices, products } from '@/schema'
+import { EditProductInput } from '@/validation/validation'
 
 export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
   '@/app/datasource/repos/ProductsRepo',
@@ -16,6 +17,13 @@ export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
 type SelectProductType = InferSelectModel<typeof products>
 type InsertProductType = InferInsertModel<typeof products>
 type InsertPricesType = InferInsertModel<typeof prices>
+type UpdatePricesType = {
+  productId: number
+  storeId: number
+  input: NonNullable<EditProductInput['prices']>
+}
+
+interface UpdateProductType extends Omit<Partial<InsertProductType>, 'id' | 'storeId'> {}
 type OptionalFindByColumns = Partial<
   Pick<
     SelectProductType,
@@ -64,10 +72,34 @@ export class ProductsRepo {
     )
   }
 
+  update({ id, input }: { id: number, input: UpdateProductType}) {
+    return wrappedD1Query(
+      this.db.update(products).set(input).where(eq(products.id, id)).returning()
+    )
+  }
+
   addPrices(input: InsertPricesType[]) {
     return wrappedD1Query(
       this.db.insert(prices).values(input)
     )
+  }
+
+  updatePrices({ productId, storeId, input }: UpdatePricesType) {
+    return wrappedD1Operation(async () => {
+      await this.db.delete(prices).where(eq(prices.productId, productId))
+
+      return await this.db.insert(prices).values(
+        input.map(price => ({
+          productId,
+          storeId: storeId,
+          currency: price.currency,
+          model: price.model,
+          amount: Math.round(price.amount),
+          amount_decimal: `${price.amount / 100}`,
+          quantity: price.quantity || null,
+        }))
+      ).returning()
+    })
   }
 
   findById({ id, storeId }: Pick<Required<FindByArgs>, 'id' | 'storeId'>) {
