@@ -71,7 +71,6 @@ export async function editProduct(
   input: EditProductInput,
   productId: number
 ) {
-  const db = c.get('db')
   const store = c.get('store')
 
   const failedCheck = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
@@ -122,55 +121,45 @@ export async function addProductImage(
   { image }: AddProductImageInput,
   { id: productId, colorId }: AddProductImageParam
 ) {
-  const db = c.get('db')
   const store = c.get('store')
 
-  const product = await db.query.products.findFirst({
-    where: (product, { eq, and }) => and(
-      eq(product.id, productId),
-      eq(product.storeId, store.id)
-    ),
-  })
+  return await runEffectPromiseWithMainLayer(c, Effect.gen(function* () {
+    const productsRepo = yield* ProductsRepoTag
+    const product = yield* productsRepo.findById({ id: productId })
 
-  if (!product) {
-    return c.json({ message: 'Product not found' }, 404)
-  }
-  const ext = image.type.split('/')[1]
-  const imageKey = getImageKey({
-    storeSlug: store.slug,
-    productSlug: product.slug,
-    colorId,
-    ext
-  })
-  const { data: newObject, error } = await tryCatch(
-    c.env.PRODUCT_MEDIA.put(imageKey, image)
-  )
-  if (error) {
-    return c.json({ message: 'Failed to upload image' }, 500)
-  }
+    if (!product) {
+      return c.json({ message: 'Product not found' }, 404)
+    }
 
-  product.images = product.images || {}
-  product.images[colorId] = product.images[colorId] || []
-  product.images[colorId].push({ url: imageKey })
+    const ext = image.type.split('/')[1]
+    const imageKey = getImageKey({
+      storeSlug: store.slug,
+      productSlug: product.slug,
+      colorId,
+      ext
+    })
 
-  const { data, error: dbError } = await tryCatch((async () => {
-    const [updated] = await db
-      .update(products)
-      .set({ images: product.images })
-      .where(eq(products.id, productId))
-      .returning()
+    const inventoryService = yield* InventoryServiceTag
+    const result = yield* Effect.either(
+      inventoryService.addProductImage({
+        id: productId,
+        bucket: c.env.PRODUCT_MEDIA,
+        image,
+        colorId,
+        key: imageKey,
+        product
+      })
+    )
 
-    return updated
-  })())
+    if (Either.isRight(result)) {
+      return c.json({
+        message: 'Image added successfully',
+        data: result.right[0]
+      }, 201)
+    }
 
-  if (dbError) {
     return c.json({ message: 'Failed to update product with new image' }, 500)
-  }
-
-  return c.json({
-    message: 'Image added successfully',
-    data
-  }, 201)
+  }))
 }
 
 export async function preeProductImage(c: Context<AppEnv>, key: string) {

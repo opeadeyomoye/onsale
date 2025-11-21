@@ -1,6 +1,10 @@
 import { type ColorId } from '@onsale/common/colors'
-import { relations, sql } from 'drizzle-orm'
+import { InferSelectModel, relations, sql } from 'drizzle-orm'
 import { type AnySQLiteColumn, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+
+export type Store = InferSelectModel<typeof stores>
+export type Product = InferSelectModel<typeof products>
+export type Price = InferSelectModel<typeof prices>
 
 const defaultTimestamps = {
   createdAt: text({ length: 26 }).notNull().default(sql`(CURRENT_TIMESTAMP)`),
