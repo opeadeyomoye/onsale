@@ -1,9 +1,8 @@
-import { Effect } from 'effect'
+import { Data, Effect } from 'effect'
 import { ProductsRepo, ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
-import { AddProductInput, EditProductInput } from '@/validation/validation'
+import { AddProductImageParam, AddProductInput, EditProductInput } from '@/validation/validation'
 import { slugify } from '@/util/string'
-import { prices } from '@/schema'
-import { InferSelectModel } from 'drizzle-orm'
+import type { Product, Price } from '@/schema'
 
 /*
  - Now, products can be added and edited from at least 2 interfaces:
@@ -42,6 +41,13 @@ export class InventoryServiceTag extends Effect.Service<InventoryServiceTag>()(
     })
   }
 ) {}
+
+class ProductImageAdditionFailed extends Data.TaggedError(
+  'ProductImageAdditionFailed',
+)<{
+  reason: 'invalid_id' | 'upload_failed',
+  cause?: unknown
+}> {}
 
 type AddProductArgs = {
   storeId: number
@@ -111,7 +117,7 @@ export class InventoryService {
 
     return Effect.gen(function*() {
       const [updated] = yield* repo.update({ id, input: partialProduct })
-      let newPrices = <InferSelectModel<typeof prices>[]>[]
+      let newPrices = <Price[]>[]
 
       if (pricesInput && pricesInput.length > 0) {
         newPrices = yield* repo.updatePrices({
@@ -122,6 +128,45 @@ export class InventoryService {
       }
 
       return { ...updated, prices: newPrices }
+    })
+  }
+
+  /**
+   * Upload a product image for a specific product color (incl. `noColor`)
+   * @returns
+   */
+  addProductImage(
+    { id, image, bucket, key, colorId, product }:
+    {
+      id: number,
+      image: File,
+      bucket: R2Bucket,
+      key: string,
+      colorId: AddProductImageParam['colorId'],
+      product?: Product
+    }
+  ) {
+    const repo = this.productsRepo
+
+    return Effect.gen(function*() {
+      product = product || (yield* repo.findById({ id }))
+      if (!product) {
+        return yield* new ProductImageAdditionFailed({ reason: 'invalid_id' })
+      }
+
+      yield* Effect.tryPromise({
+        try: () => bucket.put(key, image),
+        catch: cause => new ProductImageAdditionFailed({
+          reason: 'upload_failed',
+          cause
+        })
+      })
+
+      product.images = product.images || {}
+      product.images[colorId] = product.images[colorId] || []
+      product.images[colorId].push({ url: key })
+
+      return yield* repo.update({ id, input: { images: product.images } })
     })
   }
 

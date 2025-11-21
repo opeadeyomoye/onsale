@@ -102,13 +102,10 @@ export class ProductsRepo {
     })
   }
 
-  findById({ id, storeId }: Pick<Required<FindByArgs>, 'id' | 'storeId'>) {
+  findById({ id, storeId }: { id: number, storeId?: number }) {
     return wrappedD1Query(
       this.query.findFirst({
-        where: (product) => and(
-          eq(product.id, id),
-          eq(product.storeId, storeId)
-        ),
+        where: (product) => eq(product.id, id),
         with: {
           prices: true,
         },
