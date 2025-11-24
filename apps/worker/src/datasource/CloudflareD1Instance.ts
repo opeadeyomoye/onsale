@@ -32,26 +32,6 @@ export class DatasourceError extends Data.TaggedError('DatasourceError')<{
 }
 
 
-/**
- * take a function that returns R
- * try...catch the function
- * return DatasourceError if it fails
-*/
-export async function effectfulQuery<T extends (...args: any[]) => R, R>(
-  operation: T
-) {
-  try {
-    return Effect.succeed(await operation())
-  }
-  catch (cause) {
-    const options: DatasourceErrorOptions = cause instanceof DrizzleQueryError
-      ? { type: 'DrizzleQueryError', cause }
-      : { type: 'unknown', cause }
-
-    return Effect.fail(new DatasourceError(options))
-  }
-}
-
 export function wrappedD1Query<T>(operation: Promise<T>) {
   return Effect.tryPromise({
     try: () => operation,
