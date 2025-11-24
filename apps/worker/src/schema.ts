@@ -8,7 +8,7 @@ export type Price = InferSelectModel<typeof prices>
 
 const defaultTimestamps = {
   createdAt: text({ length: 26 }).notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text({ length: 26 }).$onUpdate(() => sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text({ length: 26 }).default(sql`NULL`).$onUpdate(() => sql`(CURRENT_TIMESTAMP)`),
   deletedAt: text({ length: 26 })
 }
 
