@@ -13,7 +13,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.19.3",
+    "@clerk/nextjs": "^6.23.3",
     "@clerk/themes": "^2.2.50",
     "@headlessui/react": "^2.2.3",
     "@heroicons/react": "^2.2.0",
@@ -25,11 +25,11 @@
     "@tanstack/react-query-devtools": "^5.79.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "hono": "4.7.9",
+    "hono": "4.10.3",
     "jotai": "^2.12.5",
     "lucide-react": "^0.511.0",
     "motion": "^12.11.4",
-    "next": "^15.3.2",
+    "next": "^15.4.8",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.4",
