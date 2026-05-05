@@ -1,4 +1,6 @@
 
+catalog:
+  hono: 4.12.16
 blockExoticSubdeps: true # https://pnpm.io/settings#blockexoticsubdeps
 minimumReleaseAge: 5760 # no updates younger than 4 days
 packages:
