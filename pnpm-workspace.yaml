@@ -1,5 +1,8 @@
+
+blockExoticSubdeps: true # https://pnpm.io/settings#blockexoticsubdeps
+minimumReleaseAge: 5760 # no updates younger than 4 days
 packages:
   - "apps/*"
   - "packages/*"
 
-blockExoticSubdeps: true
+trustPolicy: no-downgrade
