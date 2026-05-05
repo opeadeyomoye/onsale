@@ -1,7 +1,14 @@
 
+blockExoticSubdeps: true # https://pnpm.io/settings#blockexoticsubdeps
 catalog:
   hono: 4.12.16
-blockExoticSubdeps: true # https://pnpm.io/settings#blockexoticsubdeps
+
+catalogs:
+  next.js:
+    next: 15.5.15
+    react: 19.2.5
+    react-dom: 19.2.5
+
 minimumReleaseAge: 5760 # no updates younger than 4 days
 packages:
   - "apps/*"
