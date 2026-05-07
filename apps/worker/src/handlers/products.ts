@@ -6,17 +6,13 @@ import type {
   EditProductInput,
   ListProductsQuery
 } from '../validation/validation'
-import { products } from '../schema'
 import { randomString } from '../util/string'
-import { tryCatch } from '../util/tryCatch'
-import { eq } from 'drizzle-orm'
 import * as Effect from 'effect/Effect'
 import * as Either from 'effect/Either'
 import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
 import { runEffectPromiseWithMainLayer } from '@/provider'
 import * as Schedule from 'effect/Schedule'
-import { InventoryServiceTag } from '@/context/inventory/inventoryService'
-
+import { InventoryServiceTag } from '@/context/inventory/InventoryService'
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const store = c.get('store')
@@ -73,33 +69,39 @@ export async function editProduct(
 ) {
   const store = c.get('store')
 
-  const failedCheck = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
-    const repo = yield* ProductsRepoTag
-    const product = yield* repo.findById({
-      id: productId,
-      storeId: store.id
-    })
-
-    if (!product) {
-      return c.json({ message: 'Product not found' }, 404)
-    }
-
-    const badPrice = input.prices?.find(price => price.model !== product.pricingModel)
-    if (badPrice) {
-      return c.json({
-        message: `One or more of the prices uses a model that conflicts with the product's.`
-      }, 400)
-    }
-  }))
-
-  if (failedCheck) return failedCheck
-
-  const data = await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+  return await runEffectPromiseWithMainLayer(c, Effect.gen(function* () {
     const inventoryService = yield* InventoryServiceTag
-    return yield* inventoryService.editProduct({ id: productId, input })
-  }))
+    const result = yield* Effect.either(
+      inventoryService.editProduct({
+        id: productId,
+        input: {
+          ...input,
+          storeId: store.id
+        }
+      })
+    )
 
-  return c.json({ message: 'Product updated successfully', data }, 200)
+    if (Either.isLeft(result)) {
+      const { left } = result
+      if (left._tag === 'ProductEditError') {
+        if (left.reason === 'product_not_found') {
+          return c.json({ message: 'Product not found' }, 404)
+        }
+        if (left.reason === 'pricing_model_mismatch') {
+          return c.json({
+            message: `One or more of the prices uses a model that conflicts with the product's.`
+          }, 400)
+        }
+      }
+
+      return c.json({ message: 'Something went wrong. Please try again' })
+    }
+
+    return c.json({
+      message: 'Product updated successfully',
+      data: result.right
+    }, 202)
+  }))
 }
 
 export async function listProducts(c: Context<AppEnv>, query: ListProductsQuery) {
