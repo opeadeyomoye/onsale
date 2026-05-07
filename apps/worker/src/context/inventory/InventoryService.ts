@@ -31,7 +31,7 @@ import type { Product, Price } from '@/schema'
  *
  */
 export class InventoryServiceTag extends Effect.Service<InventoryServiceTag>()(
-  '@/app/context/inventory/inventoryService',
+  '@/app/context/inventory/InventoryService',
   {
     dependencies: [ProductsRepoTag.Default],
 
@@ -43,19 +43,25 @@ export class InventoryServiceTag extends Effect.Service<InventoryServiceTag>()(
 ) {}
 
 class ProductImageAdditionFailed extends Data.TaggedError(
-  'ProductImageAdditionFailed',
+  '@/app/context/inventory/ProductImageAdditionFailed',
 )<{
   reason: 'invalid_id' | 'upload_failed',
   cause?: unknown
+}> {}
+
+class ProductEditError extends Data.TaggedError('ProductEditError')<{
+  reason:
+    | 'product_not_found'
+    | 'pricing_model_mismatch'
 }> {}
 
 type AddProductArgs = {
   storeId: number
   input: AddProductInput
 }
-type EditProductArgs = {
+type ProductEditArgs = {
   id: number
-  input: EditProductInput
+  input: EditProductInput & { storeId: number }
 }
 
 export class InventoryService {
@@ -77,8 +83,6 @@ export class InventoryService {
    * @param {string} args.storeId - The ID of the store where the product will be added.
    * @param {AddProductArgs['input']} args.input - The details of the product to be added,
    * including its name, prices, and other attributes.
-   *
-   * @throws {Error} If there is an issue during the product insertion or price saving process.
    */
   addProduct({ storeId, input }: AddProductArgs) {
     const repo = this.productsRepo
@@ -92,7 +96,7 @@ export class InventoryService {
         slug = `${slug}-${Number(Date.now()).toString(36)}`
       }
 
-      // todo: remove product if pricing-insertion fails
+      // todo: add product and price records in the same transaction
       const [inserted] = yield* repo.add({ ...partialProduct, storeId, slug })
       const savedPrices = yield* repo.addPrices(
         pricesInput.map(price => ({
@@ -110,15 +114,25 @@ export class InventoryService {
     })
   }
 
-  editProduct({ id, input }: EditProductArgs) {
+  editProduct({ id, input }: ProductEditArgs) {
     const repo = this.productsRepo
+    const { prices: pricesInput, storeId, ...partialProduct } = input
 
-    const { prices: pricesInput, ...partialProduct } = input
+    return Effect.gen(function* () {
+      const product = yield* repo.findById({ id, storeId })
 
-    return Effect.gen(function*() {
+      if (!product) {
+        yield* new ProductEditError({ reason: 'product_not_found' })
+      }
+      const badPrice = input.prices?.find(price => price.model !== product?.pricingModel)
+      if (badPrice) {
+        yield* new ProductEditError({ reason: 'pricing_model_mismatch' })
+      }
+
       const [updated] = yield* repo.update({ id, input: partialProduct })
-      let newPrices = <Price[]>[]
+      let newPrices: Price[] = []
 
+      // todo: see about making any price updates in the same transaction
       if (pricesInput && pricesInput.length > 0) {
         newPrices = yield* repo.updatePrices({
           productId: updated.id,

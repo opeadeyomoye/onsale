@@ -1,7 +1,7 @@
 import * as Effect from 'effect/Effect'
 import * as EffectContext from 'effect/Context'
 import { Context } from 'hono'
-import { InventoryServiceTag } from './context/inventory/inventoryService'
+import { InventoryServiceTag } from './context/inventory/InventoryService'
 import { ProductsRepoTag } from './datasource/repos/ProductsRepo'
 import CloudflareD1InstanceTag from './datasource/CloudflareD1Instance'
 import * as Layer from 'effect/Layer'
