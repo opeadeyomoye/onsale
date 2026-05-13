@@ -107,15 +107,14 @@ export async function editProduct(
 export async function listProducts(c: Context<AppEnv>, query: ListProductsQuery) {
   const store = c.get('store')
 
-  const productsList = await runEffectPromiseWithMainLayer(c, Effect.gen(
+  return await runEffectPromiseWithMainLayer(c, Effect.gen(
     function* () {
       const productsRepo = yield* ProductsRepoTag
+      const list = yield* productsRepo.listForStore(store.id)
 
-      return yield* productsRepo.listForStore(store.id)
+      return c.json({ data: list }, 200)
     }
   ))
-
-  return c.json({ data: productsList }, 200)
 }
 
 export async function addProductImage(
