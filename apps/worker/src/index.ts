@@ -4,12 +4,12 @@ import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors'
 import z from 'zod'
 import { drizzle } from 'drizzle-orm/d1'
-import * as productsHandler from '@/handlers/products'
-import * as storesHandler from './handlers/stores'
-import requireClerkAuth from './middleware/requireClerkAuth'
-import * as dbSchema from './schema'
-import * as InputSchemas from './validation/validation'
-import { bootstrapMainLayer } from './provider'
+import * as productsHandler from '@/controllers/products'
+import * as storesHandler from '@/controllers/stores'
+import requireClerkAuth from '@/middleware/requireClerkAuth'
+import * as dbSchema from '@/schema'
+import * as InputSchemas from '@/validation/validation'
+import { bootstrapMainLayer } from '@/provider'
 
 // function to hook effect-context up with global services
 // ^ runs in middleware before the request handlers

@@ -1,9 +1,8 @@
 import * as Effect from 'effect/Effect'
-import * as EffectContext from 'effect/Context'
 import { Context } from 'hono'
-import { InventoryServiceTag } from './context/inventory/InventoryService'
-import { ProductsRepoTag } from './datasource/repos/ProductsRepo'
-import CloudflareD1InstanceTag from './datasource/CloudflareD1Instance'
+import { InventoryServiceTag } from '@/context/inventory/InventoryService'
+import { ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
+import CloudflareD1InstanceTag from '@/datasource/CloudflareD1Instance'
 import * as Layer from 'effect/Layer'
 
 export type AppRequirements =
@@ -18,12 +17,6 @@ export function runEffectPromiseWithMainLayer<A, E>(
   const runnable = Effect.provide(e, c.get('mainLayer'))
 
   return Effect.runPromise(runnable)
-    // .pipe(Effect.provide(ProductsRepoTag.Default))
-    // .pipe(Effect.provide(context))
-    // .pipe(Effect.catchTag('DatasourceError', (error) => Effect.succeed("{ msg: 'Failed' }")))
-
-
-  // const runnable = Effect.provide(program, mergedLayers)
 }
 
 export function bootstrapMainLayer(c: Context<AppEnv>) {
