@@ -29,10 +29,9 @@ import { NumericFormat } from 'react-number-format'
 import { productAtom, ProductAtomType } from './atoms'
 import { PlusIcon } from '@heroicons/react/20/solid'
 import { productsActions } from '@/lib/actions'
-import type { EntityType } from '@onsale/worker'
+import type { SelectModel } from '@onsale/worker'
 import { getQueryClient } from '@/app/getQueryClient'
 import { getMediaUrl } from '@/lib/media'
-import { hexToRgba } from '@/lib/string'
 
 
 type BasicInfoInput = {
@@ -255,7 +254,7 @@ type ColorImageSelectorProps = {
   product: {
     id: number
     name: string
-    images: EntityType<'products'>['images']
+    images: SelectModel<'products'>['images']
   }
   color?: typeof colors[ColorId]
 }
@@ -287,10 +286,10 @@ function ColorImageSelector({ product: { id, name, images }, color }: ColorImage
         {color ? (
           <div className="mt-4 flex items-center rounded-2xl">
             <div className="grid grid-cols-3 gap-3">
-              {selectedColorImages.slice(0, 3).map(image => (
-                <div key={image.url}>
+              {selectedColorImages.slice(0, 3).map((image: unknown) => (
+                <div key={(image as { url: string }).url}>
                   <img
-                    src={getMediaUrl(image.url)}
+                    src={getMediaUrl((image as { url: string }).url)}
                     alt=""
                     className="h-12 w-auto rounded-lg shadow-sm object-cover opacity-70"
                   />
