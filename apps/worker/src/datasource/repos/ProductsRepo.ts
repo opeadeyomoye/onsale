@@ -80,7 +80,7 @@ export class ProductsRepo {
 
   addPrices(input: InsertPricesType[]) {
     return wrappedD1Query(
-      this.db.insert(prices).values(input)
+      this.db.insert(prices).values(input).returning()
     )
   }
 

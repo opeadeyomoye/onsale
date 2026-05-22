@@ -10,6 +10,7 @@ import requireClerkAuth from '@/middleware/requireClerkAuth'
 import * as dbSchema from '@/schema'
 import * as InputSchemas from '@/validation/validation'
 import { bootstrapMainLayer } from '@/provider'
+import { InferSelectModel } from 'drizzle-orm'
 
 // function to hook effect-context up with global services
 // ^ runs in middleware before the request handlers
@@ -99,7 +100,10 @@ const app = new Hono<AppEnv>()
 
 export default app
 
-type DbSchemaKey = keyof typeof dbSchema
-type DbSchemaTableKey<T = DbSchemaKey> = T extends `${infer N}Relations` ? never : T
+type Schema = {
+  [K in keyof typeof dbSchema as K extends `${string}Relations`
+    ? never
+    : K]: (typeof dbSchema)[K]
+}
+export type SelectModel<T extends keyof Schema> = InferSelectModel<Schema[T]>
 export type AppType = typeof app
-export type EntityType<T extends DbSchemaTableKey> = (typeof dbSchema)[T]['$inferSelect']

@@ -13,6 +13,7 @@ import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
 import { runEffectPromiseWithMainLayer } from '@/provider'
 import * as Schedule from 'effect/Schedule'
 import { InventoryServiceTag } from '@/context/inventory/InventoryService'
+import respond from '@/util/respond';
 
 export async function getProduct(c: Context<AppEnv>, productId: number) {
   const store = c.get('store')
@@ -30,12 +31,12 @@ export async function getProduct(c: Context<AppEnv>, productId: number) {
     )
 
     if (Either.isLeft(result)) {
-      return c.json({ message: 'Something went wrong. Please try again later' }, 500)
+      return respond.serverError(c, { message: 'Something went wrong. Please try again later' })
     }
 
     const product = result.right
     if (!product) {
-      return c.json({ message: 'Product not found' }, 404)
+      return respond.notFound(c, { message: 'Product not found' })
     }
 
     return c.json(product, 200)
@@ -52,13 +53,13 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
     ))
 
     if (Either.isLeft(result)) {
-      return c.json({ message: 'Failed to add product' }, 500)
+      return respond.serverError(c, { message: 'Failed to add product' })
     }
 
-    return c.json({
+    return respond.created(c, {
       message: 'Product added successfully',
       data: result.right
-    }, 201)
+    })
   }))
 }
 
@@ -85,22 +86,23 @@ export async function editProduct(
       const { left } = result
       if (left._tag === 'ProductEditError') {
         if (left.reason === 'product_not_found') {
-          return c.json({ message: 'Product not found' }, 404)
+          return respond.notFound(c, { message: 'Product not found' })
         }
         if (left.reason === 'pricing_model_mismatch') {
-          return c.json({
+          return respond.badRequest(c, {
             message: `One or more of the prices uses a model that conflicts with the product's.`
-          }, 400)
+          })
         }
       }
 
-      return c.json({ message: 'Something went wrong. Please try again' })
+      return respond.serverError(c, { message: 'Something went wrong. Please try again' })
     }
 
-    return c.json({
+    return respond.success(c, {
+      status: 202,
       message: 'Product updated successfully',
       data: result.right
-    }, 202)
+    })
   }))
 }
 
