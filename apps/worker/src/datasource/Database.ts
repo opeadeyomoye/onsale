@@ -70,8 +70,8 @@ const defaultOptions = {
   }
 } satisfies OperationOptions
 
-function wrappedDbOperation<T>(client: DBClient) {
-  return (
+function wrappedDbOperation(client: DBClient) {
+  return <T>(
     operation: (db: DBClient) => Promise<T>,
     options?: OperationOptions
   ) => {
