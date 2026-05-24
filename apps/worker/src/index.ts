@@ -3,14 +3,15 @@ import { zValidator } from '@hono/zod-validator'
 import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors'
 import z from 'zod'
-import { drizzle } from 'drizzle-orm/d1'
 import * as productsHandler from '@/controllers/products'
 import * as storesHandler from '@/controllers/stores'
+import loadStoreMiddleware from '@/middleware/loadStore'
 import requireClerkAuth from '@/middleware/requireClerkAuth'
 import * as dbSchema from '@/schema'
 import * as InputSchemas from '@/validation/validation'
-import { bootstrapMainLayer } from '@/provider'
+import { rhe } from '@/provider'
 import { InferSelectModel } from 'drizzle-orm'
+import { HonoEnv } from '@/types'
 
 // function to hook effect-context up with global services
 // ^ runs in middleware before the request handlers
@@ -22,7 +23,7 @@ import { InferSelectModel } from 'drizzle-orm'
 // oooorr have an AppProgramRunner that is factory-fitted with the required context,
 // that takes an Effect.gen and runs it, catching any general errors
 
-const app = new Hono<AppEnv>()
+const app = new Hono<HonoEnv>()
   .use(cors({
     origin: (origin, c: Context<AppEnv>) => {
       return (c.env.CORS_ORIGINS || '').split(',').includes(origin)
@@ -32,38 +33,18 @@ const app = new Hono<AppEnv>()
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['GET', 'POST', 'PATCH']
   }))
-  .use(async (c, next) => {
-    c.set('mainLayer', bootstrapMainLayer(c))
-    await next()
-  })
   .get(
     '/product-media/:key',
     zValidator('param', z.object({ key: z.string() })),
     c => productsHandler.preeProductImage(c, c.req.valid('param').key)
   )
   .use(clerkMiddleware(), requireClerkAuth)
-  .use(async (c, next) => {
-    c.set('db', drizzle(c.env.DB, {
-      schema: dbSchema,
-      casing: 'snake_case'
-    }))
-    await next()
-  })
   .post(
     '/stores',
     zValidator('json', z.object({ name: z.string().min(4).max(256) })),
-    c => storesHandler.createStore(c, c.req.valid('json').name)
+    c => rhe(c, storesHandler.createStore(c, c.req.valid('json').name))
   )
-  .use(async (c, next) => {
-    const store = await c.get('db').query.stores.findFirst({
-      where: (store, { eq }) => eq(store.creatorId, c.get('clerkAuth')?.userId || '')
-    })
-    if (!store) {
-      return c.json({ message: 'Unknown store' }, 404)
-    }
-    c.set('store', store)
-    await next()
-  })
+  .use(loadStoreMiddleware)
   .get('/session', c => {
     const { name, slug, id } = c.get('store')
     return c.json({
@@ -73,7 +54,7 @@ const app = new Hono<AppEnv>()
   .get(
     '/products/:id',
     zValidator('param', z.object({ id: z.coerce.number() })),
-    c => productsHandler.getProduct(c, c.req.valid('param').id)
+    c => rhe(c, productsHandler.getProduct(c, c.req.valid('param').id))
   )
   .get(
     '/products',

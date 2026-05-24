@@ -4,7 +4,10 @@ type WorkerBindings = {
   CORS_ORIGINS: string
   DB: D1Database
   PRODUCT_MEDIA: R2Bucket
+  TELEGRAM_BOT_API_SECRET_TOKEN: string
   // AI: Ai
+  TURSO_DATABASE_URL: string
+  TURSO_AUTH_TOKEN: string
 }
 
 type Prettify<T> = {
@@ -16,6 +19,13 @@ interface AppDrizzle extends Prettify<import('drizzle-orm/d1').DrizzleD1Database
   $client: D1Database
 }
 
+declare namespace Cloudflare {
+  interface Env extends WorkerBindings { }
+}
+declare module 'cloudflare:test' {
+  interface ProvidedEnv extends WorkerBindings { }
+}
+
 interface AppEnv {
   Bindings: WorkerBindings
   Variables: {
@@ -25,8 +35,4 @@ interface AppEnv {
     >
     mainLayer: import('effect/Layer').Layer<import('@/provider').AppRequirements>
   }
-}
-
-declare module 'cloudflare:test' {
-  interface ProvidedEnv extends WorkerBindings { }
 }

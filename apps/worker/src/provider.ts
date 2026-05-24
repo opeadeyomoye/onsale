@@ -1,14 +1,14 @@
 import * as Effect from 'effect/Effect'
+import * as ManagedRuntime from 'effect/ManagedRuntime'
 import { Context } from 'hono'
 import { InventoryServiceTag } from '@/context/inventory/InventoryService'
 import { ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
-import CloudflareD1InstanceTag from '@/datasource/CloudflareD1Instance'
+import { DatabaseTag } from '@/datasource/Database'
 import * as Layer from 'effect/Layer'
+import { HonoContext } from '@/types'
 
 export type AppRequirements =
-  | CloudflareD1InstanceTag
-  | ProductsRepoTag
-  | InventoryServiceTag
+  ReturnType<typeof bootstrapMainLayer> extends Layer.Layer<infer A, infer B> ? A : never
 
 export function runEffectPromiseWithMainLayer<A, E>(
   c: Context<AppEnv>,
@@ -18,22 +18,20 @@ export function runEffectPromiseWithMainLayer<A, E>(
 
   return Effect.runPromise(runnable)
 }
+const AppRuntime = ManagedRuntime.make(bootstrapMainLayer())
 
-export function bootstrapMainLayer(c: Context<AppEnv>) {
-  // const context = EffectContext.empty().pipe(
-  //   EffectContext.add(CloudflareD1InstanceTag, c.get('db')),
-  // )
-  const cloudflareD1Live = Layer.succeed(
-    CloudflareD1InstanceTag,
-    CloudflareD1InstanceTag.of(c.get('db'))
-  )
+export function runHandlerEffect<A, E>(
+  c: HonoContext,
+  e: Effect.Effect<A, E, AppRequirements>
+) {
+  return AppRuntime.runPromise(e)
+}
+export const rhe = runHandlerEffect
 
-  const appServicesLive = Layer.mergeAll(
+export function bootstrapMainLayer() {
+  return Layer.mergeAll(
+    DatabaseTag.Default,
     ProductsRepoTag.Default,
     InventoryServiceTag.Default,
-  ).pipe(
-    Layer.provide(cloudflareD1Live)
   )
-
-  return Layer.merge(appServicesLive, cloudflareD1Live)
 }

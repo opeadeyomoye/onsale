@@ -1,6 +1,15 @@
+import type { InferSelectModel } from 'drizzle-orm'
 import type { Context } from 'hono'
+import type { stores } from '@/schema'
 
-export type HonoContext = Context<AppEnv>
+export type HonoEnv = {
+  Bindings: WorkerBindings
+  Variables: {
+    store: InferSelectModel<typeof stores>
+  }
+}
+export type HonoContext = Context<HonoEnv>
+
 /*
 type TelegramWebhookPayload = {
   update_id: number
