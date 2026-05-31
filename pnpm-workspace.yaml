@@ -1,4 +1,10 @@
-
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  '@clerk/shared': false
+  lefthook: false
+  sharp: false
 blockExoticSubdeps: true # https://pnpm.io/settings#blockexoticsubdeps
 catalog:
   hono: 4.12.16
@@ -10,8 +16,5 @@ catalogs:
     react-dom: 19.2.5
 
 minimumReleaseAge: 5760 # no updates younger than 4 days
-packages:
-  - "apps/*"
-  - "packages/*"
 
 trustPolicy: no-downgrade
