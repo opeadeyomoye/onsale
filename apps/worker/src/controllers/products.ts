@@ -1,24 +1,23 @@
-import { Context } from 'hono'
 import type {
   AddProductImageInput,
   AddProductImageParam,
   AddProductInput,
   EditProductInput,
   ListProductsQuery
-} from '../validation/validation'
-import { randomString } from '../util/string'
+} from '@/validation/validation'
+import { randomString } from '@/util/string'
 import * as Effect from 'effect/Effect'
 import * as Either from 'effect/Either'
-import { ProductsRepoTag } from '../datasource/repos/ProductsRepo'
-import { runEffectPromiseWithMainLayer } from '@/provider'
+import { ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
 import * as Schedule from 'effect/Schedule'
 import { InventoryServiceTag } from '@/context/inventory/InventoryService'
-import respond from '@/util/respond';
+import type { HonoContext } from '@/types'
+import respond from '@/util/respond'
 
-export async function getProduct(c: Context<AppEnv>, productId: number) {
+export function getProduct(c: HonoContext, productId: number) {
   const store = c.get('store')
 
-  return await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+  return Effect.gen(function*() {
     const repo = yield* ProductsRepoTag
     const result = yield* Effect.either(
       Effect.retry(
@@ -40,13 +39,13 @@ export async function getProduct(c: Context<AppEnv>, productId: number) {
     }
 
     return c.json(product, 200)
-  }))
+  })
 }
 
-export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
+export function addProduct(c: HonoContext, input: AddProductInput) {
   const store = c.get('store')
 
-  return await runEffectPromiseWithMainLayer(c, Effect.gen(function*() {
+  return Effect.gen(function*() {
     const inventoryService = yield* InventoryServiceTag
     const result = yield* Effect.either(
       inventoryService.addProduct({ storeId: store.id, input }
@@ -60,17 +59,17 @@ export async function addProduct(c: Context<AppEnv>, input: AddProductInput) {
       message: 'Product added successfully',
       data: result.right
     })
-  }))
+  })
 }
 
-export async function editProduct(
-  c: Context<AppEnv>,
+export function editProduct(
+  c: HonoContext,
   input: EditProductInput,
   productId: number
 ) {
   const store = c.get('store')
 
-  return await runEffectPromiseWithMainLayer(c, Effect.gen(function* () {
+  return Effect.gen(function* () {
     const inventoryService = yield* InventoryServiceTag
     const result = yield* Effect.either(
       inventoryService.editProduct({
@@ -103,30 +102,28 @@ export async function editProduct(
       message: 'Product updated successfully',
       data: result.right
     })
-  }))
+  })
 }
 
-export async function listProducts(c: Context<AppEnv>, query: ListProductsQuery) {
+export function listProducts(c: HonoContext, query: ListProductsQuery) {
   const store = c.get('store')
 
-  return await runEffectPromiseWithMainLayer(c, Effect.gen(
-    function* () {
-      const productsRepo = yield* ProductsRepoTag
-      const list = yield* productsRepo.listForStore(store.id)
+  return Effect.gen(function* () {
+    const productsRepo = yield* ProductsRepoTag
+    const list = yield* productsRepo.listForStore(store.id)
 
-      return c.json({ data: list }, 200)
-    }
-  ))
+    return c.json({ data: list }, 200)
+  })
 }
 
-export async function addProductImage(
-  c: Context<AppEnv>,
+export function addProductImage(
+  c: HonoContext,
   { image }: AddProductImageInput,
   { id: productId, colorId }: AddProductImageParam
 ) {
   const store = c.get('store')
 
-  return await runEffectPromiseWithMainLayer(c, Effect.gen(function* () {
+  return Effect.gen(function* () {
     const productsRepo = yield* ProductsRepoTag
     const product = yield* productsRepo.findById({ id: productId })
 
@@ -162,10 +159,10 @@ export async function addProductImage(
     }
 
     return c.json({ message: 'Failed to update product with new image' }, 500)
-  }))
+  })
 }
 
-export async function preeProductImage(c: Context<AppEnv>, key: string) {
+export async function preeProductImage(c: HonoContext, key: string) {
   const object = await c.env.PRODUCT_MEDIA.get(key)
   if (!object) {
     return c.json({ message: 'Image not found' }, 404)

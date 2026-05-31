@@ -59,24 +59,24 @@ const app = new Hono<HonoEnv>()
   .get(
     '/products',
     zValidator('query', InputSchemas.ListProductsQuerySchema),
-    c => productsHandler.listProducts(c, c.req.valid('query'))
+    c => rhe(c, productsHandler.listProducts(c, c.req.valid('query')))
   )
   .post(
     '/products',
     zValidator('json', InputSchemas.AddProductSchema),
-    c => productsHandler.addProduct(c, c.req.valid('json')),
+    c => rhe(c, productsHandler.addProduct(c, c.req.valid('json'))),
   )
   .patch(
     '/products/:id',
     zValidator('param', InputSchemas.EditProductSchema.param),
     zValidator('json', InputSchemas.EditProductSchema.form()),
-    c => productsHandler.editProduct(c, c.req.valid('json'), c.req.valid('param').id)
+    c => rhe(c, productsHandler.editProduct(c, c.req.valid('json'), c.req.valid('param').id))
   )
   .post(
     '/products/:id/images/:colorId',
     zValidator('param', InputSchemas.AddProductImageSchema.param),
     zValidator('form', InputSchemas.AddProductImageSchema.form),
-    c => productsHandler.addProductImage(c, c.req.valid('form'), c.req.valid('param'))
+    c => rhe(c, productsHandler.addProductImage(c, c.req.valid('form'), c.req.valid('param')))
   )
 
 export default app
