@@ -4,7 +4,7 @@ import { prices, products } from '@/schema'
 import { EditProductInput } from '@/validation/validation'
 import { DatabaseTag } from '@/datasource/Database'
 
-export class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
+export default class ProductsRepoTag extends Effect.Service<ProductsRepoTag>()(
   '@/app/datasource/repos/ProductsRepo',
   {
     dependencies: [DatabaseTag.Default],
@@ -24,18 +24,14 @@ type UpdatePricesType = {
   input: NonNullable<EditProductInput['prices']>
 }
 
-interface UpdateProductType extends Omit<Partial<InsertProductType>, 'id' | 'storeId'> {}
-type OptionalFindByColumns = Partial<
-  Pick<
-    SelectProductType,
-    'id' | 'slug'
-  >
->
+interface UpdateProductType
+  extends Omit<Partial<InsertProductType>, 'id' | 'storeId'> {}
+type OptionalFindByColumns = Partial<Pick<SelectProductType, 'id' | 'slug'>>
 interface FindByArgs extends OptionalFindByColumns {
   storeId: number
 }
 
-export class ProductsRepo {
+class ProductsRepo {
   constructor(protected database: DatabaseTag) {}
 
   exists({ id, storeId, slug }: FindByArgs) {
@@ -47,10 +43,10 @@ export class ProductsRepo {
     if (slug) {
       where.push(eq(columns.slug, slug))
     }
-    return this.database.wrap(
-      db => db.query.products
+    return this.database.wrap(db =>
+      db.query.products
         .findFirst({ where: () => and(...where) })
-        .then(record => record ? true : false)
+        .then(record => (record ? true : false))
     )
   }
 
@@ -58,12 +54,9 @@ export class ProductsRepo {
     return this.database.wrap(db => db.insert(products).values(input).returning())
   }
 
-  update({ id, input }: { id: number, input: UpdateProductType}) {
-    return this.database.wrap(db => db
-      .update(products)
-      .set(input)
-      .where(eq(products.id, id))
-      .returning()
+  update({ id, input }: { id: number; input: UpdateProductType }) {
+    return this.database.wrap(db =>
+      db.update(products).set(input).where(eq(products.id, id)).returning()
     )
   }
 
@@ -75,36 +68,39 @@ export class ProductsRepo {
     return this.database.wrap(async db => {
       await db.delete(prices).where(eq(prices.productId, productId))
 
-      return await db.insert(prices).values(
-        input.map(price => ({
-          productId,
-          storeId: storeId,
-          currency: price.currency,
-          model: price.model,
-          amount: Math.round(price.amount),
-          amount_decimal: `${price.amount / 100}`,
-          quantity: price.quantity || null,
-        }))
-      ).returning()
+      return await db
+        .insert(prices)
+        .values(
+          input.map(price => ({
+            productId,
+            storeId: storeId,
+            currency: price.currency,
+            model: price.model,
+            amount: Math.round(price.amount),
+            amount_decimal: `${price.amount / 100}`,
+            quantity: price.quantity || null
+          }))
+        )
+        .returning()
     })
   }
 
-  findById({ id, storeId }: { id: number, storeId?: number }) {
-    return this.database.wrap(db => db.query.products
-      .findFirst({
-        where: (product) => eq(product.id, id),
+  findById({ id, storeId }: { id: number; storeId?: number }) {
+    return this.database.wrap(db =>
+      db.query.products.findFirst({
+        where: product => eq(product.id, id),
         with: {
-          prices: true,
-        },
+          prices: true
+        }
       })
     )
   }
 
   listForStore(storeId: number) {
-    return this.database.wrap(db => db.query.products
-      .findMany({
-        where: (products) => eq(products.storeId, storeId),
-        orderBy: (products) => desc(products.createdAt),
+    return this.database.wrap(db =>
+      db.query.products.findMany({
+        where: products => eq(products.storeId, storeId),
+        orderBy: products => desc(products.createdAt),
         with: {
           prices: true
         }

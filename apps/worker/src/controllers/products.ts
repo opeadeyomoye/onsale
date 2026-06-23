@@ -8,7 +8,7 @@ import type {
 import { randomString } from '@/util/string'
 import * as Effect from 'effect/Effect'
 import * as Either from 'effect/Either'
-import { ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
+import ProductsRepoTag from '@/datasource/repos/ProductsRepo'
 import * as Schedule from 'effect/Schedule'
 import { InventoryServiceTag } from '@/context/inventory/InventoryService'
 import type { HonoContext } from '@/types'
@@ -17,7 +17,7 @@ import respond from '@/util/respond'
 export function getProduct(c: HonoContext, productId: number) {
   const store = c.get('store')
 
-  return Effect.gen(function*() {
+  return Effect.gen(function* () {
     const repo = yield* ProductsRepoTag
     const result = yield* Effect.either(
       Effect.retry(
@@ -25,12 +25,14 @@ export function getProduct(c: HonoContext, productId: number) {
           id: productId,
           storeId: store.id
         }),
-        { times: 2 , schedule: Schedule.fixed('100 millis')}
+        { times: 2, schedule: Schedule.fixed('100 millis') }
       )
     )
 
     if (Either.isLeft(result)) {
-      return respond.serverError(c, { message: 'Something went wrong. Please try again later' })
+      return respond.serverError(c, {
+        message: 'Something went wrong. Please try again later'
+      })
     }
 
     const product = result.right
@@ -45,11 +47,11 @@ export function getProduct(c: HonoContext, productId: number) {
 export function addProduct(c: HonoContext, input: AddProductInput) {
   const store = c.get('store')
 
-  return Effect.gen(function*() {
+  return Effect.gen(function* () {
     const inventoryService = yield* InventoryServiceTag
     const result = yield* Effect.either(
-      inventoryService.addProduct({ storeId: store.id, input }
-    ))
+      inventoryService.addProduct({ storeId: store.id, input })
+    )
 
     if (Either.isLeft(result)) {
       return respond.serverError(c, { message: 'Failed to add product' })
@@ -94,7 +96,9 @@ export function editProduct(
         }
       }
 
-      return respond.serverError(c, { message: 'Something went wrong. Please try again' })
+      return respond.serverError(c, {
+        message: 'Something went wrong. Please try again'
+      })
     }
 
     return respond.success(c, {
@@ -152,10 +156,13 @@ export function addProductImage(
     )
 
     if (Either.isRight(result)) {
-      return c.json({
-        message: 'Image added successfully',
-        data: result.right[0]
-      }, 201)
+      return c.json(
+        {
+          message: 'Image added successfully',
+          data: result.right[0]
+        },
+        201
+      )
     }
 
     return c.json({ message: 'Failed to update product with new image' }, 500)
@@ -174,13 +181,20 @@ export async function preeProductImage(c: HonoContext, key: string) {
   return c.newResponse(object.body, 200, Object.fromEntries(headers))
 }
 
-function getImageKey(
-  { storeSlug, productSlug, colorId, ext }:
-  { storeSlug: string, productSlug: string, colorId: string, ext?: string }
-) {
+function getImageKey({
+  storeSlug,
+  productSlug,
+  colorId,
+  ext
+}: {
+  storeSlug: string
+  productSlug: string
+  colorId: string
+  ext?: string
+}) {
   const colorPart = colorId === 'noColor' ? '' : `-in-${colorId}`
   const randomPart = `-${Number(Date.now()).toString(36)}-${randomString(8)}`
   const end = ext ? `.${ext}` : ''
 
-  return`${storeSlug}-${productSlug}${colorPart}${randomPart}${end}`
+  return `${storeSlug}-${productSlug}${colorPart}${randomPart}${end}`
 }

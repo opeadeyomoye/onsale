@@ -1,6 +1,10 @@
 import { Data, Effect } from 'effect'
-import { ProductsRepo, ProductsRepoTag } from '@/datasource/repos/ProductsRepo'
-import { AddProductImageParam, AddProductInput, EditProductInput } from '@/validation/validation'
+import ProductsRepoTag from '@/datasource/repos/ProductsRepo'
+import {
+  AddProductImageParam,
+  AddProductInput,
+  EditProductInput
+} from '@/validation/validation'
 import { slugify } from '@/util/string'
 import type { Product, Price } from '@/schema'
 
@@ -43,16 +47,14 @@ export class InventoryServiceTag extends Effect.Service<InventoryServiceTag>()(
 ) {}
 
 class ProductImageAdditionFailed extends Data.TaggedError(
-  '@/app/context/inventory/ProductImageAdditionFailed',
+  '@/app/context/inventory/ProductImageAdditionFailed'
 )<{
-  reason: 'invalid_id' | 'upload_failed',
+  reason: 'invalid_id' | 'upload_failed'
   cause?: unknown
 }> {}
 
 class ProductEditError extends Data.TaggedError('ProductEditError')<{
-  reason:
-    | 'product_not_found'
-    | 'pricing_model_mismatch'
+  reason: 'product_not_found' | 'pricing_model_mismatch'
 }> {}
 
 type AddProductArgs = {
@@ -65,9 +67,9 @@ type ProductEditArgs = {
 }
 
 export class InventoryService {
-  protected productsRepo: ProductsRepo
+  protected productsRepo: ProductsRepoTag
 
-  constructor(repo: ProductsRepo) {
+  constructor(repo: ProductsRepoTag) {
     this.productsRepo = repo
   }
 
@@ -106,7 +108,7 @@ export class InventoryService {
           model: price.model,
           amount: Math.round(price.amount),
           amount_decimal: `${price.amount / 100}`,
-          quantity: price.quantity || null,
+          quantity: price.quantity || null
         }))
       )
 
@@ -124,7 +126,9 @@ export class InventoryService {
       if (!product) {
         yield* new ProductEditError({ reason: 'product_not_found' })
       }
-      const badPrice = input.prices?.find(price => price.model !== product?.pricingModel)
+      const badPrice = input.prices?.find(
+        price => price.model !== product?.pricingModel
+      )
       if (badPrice) {
         yield* new ProductEditError({ reason: 'pricing_model_mismatch' })
       }
@@ -149,20 +153,24 @@ export class InventoryService {
    * Upload a product image for a specific product color (incl. `noColor`)
    * @returns
    */
-  addProductImage(
-    { id, image, bucket, key, colorId, product }:
-    {
-      id: number,
-      image: File,
-      bucket: R2Bucket,
-      key: string,
-      colorId: AddProductImageParam['colorId'],
-      product?: Product
-    }
-  ) {
+  addProductImage({
+    id,
+    image,
+    bucket,
+    key,
+    colorId,
+    product
+  }: {
+    id: number
+    image: File
+    bucket: R2Bucket
+    key: string
+    colorId: AddProductImageParam['colorId']
+    product?: Product
+  }) {
     const repo = this.productsRepo
 
-    return Effect.gen(function*() {
+    return Effect.gen(function* () {
       product = product || (yield* repo.findById({ id }))
       if (!product) {
         return yield* new ProductImageAdditionFailed({ reason: 'invalid_id' })
@@ -170,10 +178,11 @@ export class InventoryService {
 
       yield* Effect.tryPromise({
         try: () => bucket.put(key, image),
-        catch: cause => new ProductImageAdditionFailed({
-          reason: 'upload_failed',
-          cause
-        })
+        catch: cause =>
+          new ProductImageAdditionFailed({
+            reason: 'upload_failed',
+            cause
+          })
       })
 
       product.images = product.images || {}
@@ -188,4 +197,3 @@ export class InventoryService {
     return false
   }
 }
-

@@ -50,7 +50,7 @@ export class DatasourceError extends Data.TaggedError(
   }
 }
 
-class DatabaseConnectionFailedError extends Data.TaggedError(
+export class DatabaseConnectionFailedError extends Data.TaggedError(
   '@/app/datasource/Database/DatabaseConnectionFailedError'
 )<{ cause: unknown }> {}
 
@@ -84,7 +84,8 @@ function wrappedDbOperation(client: DBClient) {
         try: () => operation(client),
         catch: cause =>
           new DatasourceError({
-            type: cause instanceof DrizzleQueryError ? 'DrizzleQueryError' : 'unknown',
+            type:
+              cause instanceof DrizzleQueryError ? 'DrizzleQueryError' : 'unknown',
             cause,
             message: `${String(cause)} - Failed after ${times} ${retry.schedule}-delay retries (base: ${baseDelay}ms)`
           })
