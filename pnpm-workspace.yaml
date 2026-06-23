@@ -18,3 +18,7 @@ catalogs:
 minimumReleaseAge: 5760 # no updates younger than 4 days
 
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - 'eslint-import-resolver-typescript@3.10.1'
+  - 'semver@6.3.1'
+  - '@eslint/core@0.10.0'
