@@ -3,9 +3,7 @@
   "name": "onsale-worker-main",
   "main": "src/index.ts",
   "compatibility_date": "2025-05-14",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
@@ -18,7 +16,15 @@
     }
   ],
   "vars": {
-    "CORS_ORIGINS": "https://office.zesticommerce.com",
+    "CORS_ORIGINS": "https://office.zesticommerce.com"
+  },
+  "secrets": {
+    "required": [
+      "CLERK_PUBLISHABLE_KEY",
+      "CLERK_SECRET_KEY",
+      "TURSO_DATABASE_URL",
+      "TURSO_AUTH_TOKEN"
+    ]
   },
   // "kv_namespaces": [
   //   {
@@ -39,7 +45,7 @@
       "database_id": "b86ff3d4-691d-44cd-ad80-71fa3820530b",
       "migrations_dir": "drizzle"
     }
-  ],
+  ]
   // "ai": {
   //   "binding": "AI"
   // },
